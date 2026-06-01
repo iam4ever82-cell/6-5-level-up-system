@@ -1,0 +1,2448 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6-5 레벨업 시스템</title>
+<style>
+:root{
+  --bg1:#07111f;--bg2:#102a43;--ink:#102033;--blue:#38bdf8;--mint:#34d399;--pink:#fb7185;--yellow:#facc15;--purple:#8b5cf6;
+}
+*{box-sizing:border-box}
+body{
+  font-family:Arial,'Noto Sans KR',sans-serif;margin:0;padding:22px;min-height:100vh;color:var(--ink);
+  background:radial-gradient(circle at 15% 10%,rgba(56,189,248,.35),transparent 28%),
+             radial-gradient(circle at 85% 0%,rgba(139,92,246,.32),transparent 30%),
+             linear-gradient(135deg,var(--bg1),var(--bg2));
+}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.14;background-image:linear-gradient(rgba(255,255,255,.25) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.25) 1px,transparent 1px);background-size:34px 34px}
+.screen{max-width:1200px;margin:0 auto;position:relative}
+.hidden{display:none!important}
+h1{text-align:center;color:white;font-size:clamp(30px,5vw,54px);margin:12px 0 14px;letter-spacing:-1.5px;text-shadow:0 8px 24px rgba(0,0,0,.45)}
+h1::after{content:"QUEST BOARD";display:block;margin-top:6px;font-size:14px;letter-spacing:5px;color:#a5f3fc}
+.top,.questBox,.pageBox{
+  background:rgba(255,255,255,.94);border:2px solid rgba(255,255,255,.75);border-radius:28px;padding:22px;margin:0 auto 18px;
+  box-shadow:0 24px 70px rgba(0,0,0,.28);backdrop-filter:blur(10px);overflow:hidden;
+}
+.top{position:relative}
+.top::before{content:"🏆";position:absolute;right:22px;top:12px;font-size:70px;opacity:.12}
+.top h2{margin:0 0 14px;font-size:28px;color:#0f172a}
+#classLevel{display:inline-block;background:linear-gradient(135deg,var(--yellow),#fb923c);color:#331400;padding:4px 14px;border-radius:14px}
+.progress{width:100%;background:#dbeafe;border-radius:999px;overflow:hidden;height:34px;border:3px solid #eff6ff;box-shadow:inset 0 2px 8px rgba(0,0,0,.15)}
+.bar{height:100%;background:linear-gradient(90deg,#38bdf8,#34d399,#facc15);width:0%;text-align:center;color:#052033;line-height:28px;font-weight:900;transition:width .35s ease}
+.nav{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
+button{margin:4px 3px 0 0;padding:10px 13px;border:none;border-radius:14px;cursor:pointer;font-weight:900;transition:.15s ease;box-shadow:0 8px 16px rgba(15,23,42,.13)}
+button:hover{transform:translateY(-2px)}
+.blue{background:linear-gradient(135deg,#3b82f6,#06b6d4);color:white}
+.green{background:linear-gradient(135deg,#22c55e,#14b8a6);color:white}
+.red{background:linear-gradient(135deg,#ef4444,#f97316);color:white}
+.purple{background:linear-gradient(135deg,#8b5cf6,#ec4899);color:white}
+.gray{background:#e5e7eb;color:#111827}
+.yellow{background:linear-gradient(135deg,#facc15,#fb923c);color:#422006}
+.questBox{display:grid;grid-template-columns:1fr 1fr;gap:14px;background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(224,242,254,.94))}
+.questTitle{grid-column:1/-1;font-size:28px;font-weight:900;color:#0f172a;text-align:center}
+.questCard{background:white;border-radius:22px;padding:20px 18px;text-align:center;border:2px solid #bae6fd;box-shadow:0 10px 24px rgba(15,23,42,.12);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:12px;min-height:360px}
+.questCard .emoji{font-size:42px}
+.questCard strong{font-size:24px;line-height:1.5;color:#0f172a;display:block}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:16px}
+.card{position:relative;background:rgba(255,255,255,.95);border-radius:24px;padding:18px;box-shadow:0 16px 38px rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.8);overflow:hidden;transition:.18s ease}
+.card:hover{transform:translateY(-4px);box-shadow:0 22px 46px rgba(0,0,0,.28)}
+.card::before{content:"";position:absolute;inset:0 0 auto 0;height:7px;background:linear-gradient(90deg,var(--blue),var(--purple),var(--pink),var(--yellow))}
+.name{font-size:20px;font-weight:900;margin:8px 0 10px;color:#0f172a;cursor:pointer}
+.name:hover{color:#2563eb}
+.level{display:inline-block;font-size:23px;color:#fff;background:linear-gradient(135deg,#fb923c,#fb7185);padding:5px 13px;border-radius:14px;font-weight:900;margin-bottom:8px}
+.stars{color:#facc15;font-size:23px;min-height:32px;letter-spacing:1px;text-shadow:0 2px 4px rgba(0,0,0,.15)}
+.badgeRow{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;min-height:26px}
+.badge{background:#eff6ff;border:1px solid #bfdbfe;border-radius:999px;padding:4px 8px;font-size:12px;font-weight:900}
+.logBox{background:#f8fafc;border-radius:18px;padding:14px;margin-top:14px;max-height:290px;overflow:auto}
+.log{padding:7px 0;border-bottom:1px dashed #cbd5e1;font-size:14px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin:14px 0}
+.stat{background:#f8fafc;border-radius:18px;padding:14px;text-align:center;border:1px solid #e2e8f0}
+.stat b{display:block;font-size:28px;color:#f97316}
+input,textarea{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:13px;font-size:16px;margin:5px 0 12px}
+textarea{min-height:90px;resize:vertical}
+table{width:100%;border-collapse:collapse;background:white;border-radius:18px;overflow:hidden}
+th,td{padding:10px;border-bottom:1px solid #e5e7eb;text-align:left}
+th{background:#dbeafe}
+.rewardBoard{margin-top:18px;background:linear-gradient(135deg,#fff7ed,#fef3c7,#e0f2fe);border:3px solid #facc15;border-radius:28px;padding:22px;text-align:center;box-shadow:0 18px 38px rgba(250,204,21,.25)}
+.rewardLabel{font-size:20px;font-weight:900;color:#92400e}
+.rewardMain{font-size:clamp(28px,4vw,46px);font-weight:900;color:#ea580c;margin:8px 0;text-shadow:0 3px 0 rgba(255,255,255,.8)}
+.questImage,.rewardImage{max-width:100%;border-radius:20px;margin-top:12px;box-shadow:0 10px 25px rgba(15,23,42,.18)}
+.questImage{width:100%;max-width:280px;max-height:220px;object-fit:contain;object-position:center;display:block;margin:8px auto 0;background:#f8fafc;padding:8px}
+.rewardImage{max-height:280px;object-fit:cover}
+.fileNote{font-size:13px;color:#64748b;margin-top:-6px;margin-bottom:10px}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#0f172ae8;color:white;padding:13px 18px;border-radius:18px;box-shadow:0 12px 30px rgba(0,0,0,.35);z-index:20;font-weight:900}
+.modal{position:fixed;inset:0;background:#0009;display:grid;place-items:center;z-index:30;padding:20px}
+.modalBox{background:white;border-radius:30px;padding:30px;max-width:560px;text-align:center;box-shadow:0 0 50px rgba(250,204,21,.55)}
+.confetti{position:fixed;top:-20px;width:10px;height:18px;z-index:31;animation:fall 2.8s linear forwards}
+.sync{position:fixed;right:14px;bottom:14px;background:rgba(15,23,42,.88);color:white;padding:8px 12px;border-radius:999px;font-size:12px;z-index:50;box-shadow:0 8px 22px rgba(0,0,0,.25)}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+@media(max-width:700px){body{padding:14px}.top,.questBox,.pageBox{padding:17px;border-radius:22px}.questBox{grid-template-columns:1fr}.top h2{font-size:23px}}
+
+/* 티벳여우 기본 장식 + 위/아래 박스 크기 균형 */
+.top, .questBox{
+  min-height: 330px;
+}
+.questBox{
+  align-items: stretch;
+}
+.foxDeco{
+  position:absolute;
+  width:120px;
+  max-width:22vw;
+  opacity:.18;
+  pointer-events:none;
+  z-index:0;
+}
+.foxDeco.foxA{right:24px;bottom:18px;transform:rotate(-4deg)}
+.foxDeco.foxB{left:24px;top:18px;transform:rotate(5deg)}
+.top > *, .questBox > *{
+  position:relative;
+  z-index:1;
+}
+.questCard{
+  min-height: 230px !important;
+  justify-content:center !important;
+}
+.questFox{
+  width:150px;
+  max-width:45%;
+  height:auto;
+  object-fit:contain;
+  margin-top:10px;
+  opacity:.92;
+}
+.rewardFox{
+  width:120px;
+  max-width:28%;
+  height:auto;
+  object-fit:contain;
+  display:block;
+  margin:8px auto 0;
+}
+@media(max-width:700px){
+  .top,.questBox{min-height:auto}
+  .foxDeco{width:90px}
+  .questFox{width:110px}
+}
+
+
+/* 컴팩트 버전: 티벳여우 제거 + 상단 박스 축소 */
+.top, .questBox{
+  min-height: auto !important;
+  margin-bottom: 14px !important;
+}
+.top{
+  padding: 18px 22px !important;
+}
+.top h2{
+  margin-bottom: 10px !important;
+}
+.progress{
+  height: 28px !important;
+}
+.bar{
+  line-height: 22px !important;
+}
+.rewardBoard{
+  margin-top: 14px !important;
+  padding: 15px !important;
+  border-radius: 24px !important;
+}
+.rewardLabel{
+  font-size: 17px !important;
+}
+.rewardMain{
+  font-size: clamp(24px,3vw,38px) !important;
+  margin: 4px 0 !important;
+}
+.questBox{
+  padding: 16px 22px !important;
+  gap: 12px !important;
+}
+.questTitle{
+  font-size: 25px !important;
+  margin-bottom: 2px !important;
+}
+.questCard{
+  min-height: 160px !important;
+  padding: 16px !important;
+  gap: 8px !important;
+  justify-content:center !important;
+}
+.questCard .emoji{
+  font-size: 34px !important;
+}
+.questCard strong{
+  font-size: 22px !important;
+}
+.grid{
+  margin-top: 4px !important;
+}
+@media(max-width:700px){
+  .top{padding:16px !important}
+  .questBox{padding:15px !important}
+  .questCard{min-height:140px !important}
+}
+
+
+.dashboardSection{
+  margin-top:10px;
+}
+.growthBox{
+  background:linear-gradient(135deg,#0f172a,#1e3a8a);
+  color:white;
+  border-radius:24px;
+  padding:22px;
+  text-align:center;
+  margin-bottom:18px;
+  box-shadow:0 18px 36px rgba(15,23,42,.25);
+}
+.growthTitle{
+  font-size:18px;
+  font-weight:900;
+  margin-bottom:10px;
+  color:#bae6fd;
+}
+.bigStars{
+  font-size:42px;
+  letter-spacing:4px;
+  margin-bottom:10px;
+}
+.growthRate{
+  display:inline-block;
+  background:rgba(255,255,255,.15);
+  padding:8px 16px;
+  border-radius:999px;
+  font-weight:900;
+}
+.questStatsGrid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:12px;
+  margin-bottom:20px;
+}
+.questStatCard{
+  background:linear-gradient(135deg,#ffffff,#eff6ff);
+  border-radius:22px;
+  padding:18px;
+  text-align:center;
+  border:2px solid #dbeafe;
+  box-shadow:0 10px 22px rgba(15,23,42,.08);
+}
+.questEmoji{
+  font-size:34px;
+  margin-bottom:8px;
+}
+.questStatTitle{
+  font-size:15px;
+  font-weight:800;
+  color:#475569;
+}
+.questStatValue{
+  font-size:30px;
+  font-weight:900;
+  color:#0f172a;
+  margin-top:6px;
+}
+.timelineBox{
+  background:#f8fafc;
+  border-radius:20px;
+  padding:16px;
+  max-height:340px;
+  overflow:auto;
+  border:1px solid #e2e8f0;
+}
+.timelineItem{
+  position:relative;
+  padding:12px 14px 12px 44px;
+  background:white;
+  border-radius:16px;
+  margin-bottom:12px;
+  box-shadow:0 4px 10px rgba(15,23,42,.06);
+}
+.timelineItem::before{
+  content:"✨";
+  position:absolute;
+  left:12px;
+  top:10px;
+  font-size:20px;
+}
+.timelineDate{
+  font-size:12px;
+  color:#64748b;
+  margin-bottom:4px;
+}
+.timelineText{
+  font-weight:700;
+  color:#0f172a;
+}
+
+
+.questStatsGrid{
+  grid-template-columns:repeat(auto-fit,minmax(145px,1fr)) !important;
+}
+.dangerCard{
+  background:linear-gradient(135deg,#fff1f2,#ffffff) !important;
+  border-color:#fecdd3 !important;
+}
+.timelineItem{
+  border-left:8px solid #cbd5e1;
+}
+.timelineItem.levelup{
+  background:linear-gradient(135deg,#fffbeb,#ffffff);
+  border-left-color:#facc15;
+}
+.timelineItem.levelup::before{
+  content:"🏆";
+}
+.timelineItem.down{
+  background:linear-gradient(135deg,#fff1f2,#ffffff);
+  border-left-color:#ef4444;
+}
+.timelineItem.down::before{
+  content:"⚠️";
+}
+.timelineItem.study{
+  background:linear-gradient(135deg,#eff6ff,#ffffff);
+  border-left-color:#3b82f6;
+}
+.timelineItem.study::before{
+  content:"📚";
+}
+.timelineItem.read{
+  background:linear-gradient(135deg,#ecfdf5,#ffffff);
+  border-left-color:#22c55e;
+}
+.timelineItem.read::before{
+  content:"📖";
+}
+.timelineItem.praise{
+  background:linear-gradient(135deg,#f5f3ff,#ffffff);
+  border-left-color:#8b5cf6;
+}
+.timelineItem.praise::before{
+  content:"👏";
+}
+.timelineItem.password{
+  background:linear-gradient(135deg,#f8fafc,#ffffff);
+  border-left-color:#64748b;
+}
+.timelineItem.password::before{
+  content:"🔐";
+}
+.timelineTag{
+  display:inline-block;
+  padding:3px 8px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:900;
+  margin-bottom:5px;
+}
+.timelineItem.levelup .timelineTag{background:#fef3c7;color:#92400e}
+.timelineItem.down .timelineTag{background:#fee2e2;color:#991b1b}
+.timelineItem.study .timelineTag{background:#dbeafe;color:#1e40af}
+.timelineItem.read .timelineTag{background:#dcfce7;color:#166534}
+.timelineItem.praise .timelineTag{background:#ede9fe;color:#5b21b6}
+.timelineItem.password .timelineTag{background:#e2e8f0;color:#334155}
+
+
+/* 최종 대시보드: 성장률 제거, 퀘스트 제목 자동 표시 */
+.growthBox{
+  padding:20px !important;
+}
+.bigStars{
+  margin-bottom:0 !important;
+}
+.questStatTitle{
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1.3;
+  word-break:keep-all;
+}
+
+
+.monthlyGrid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:12px;
+  margin-bottom:18px;
+}
+.monthlyCard{
+  background:linear-gradient(135deg,#ffffff,#f8fafc);
+  border:2px solid #dbeafe;
+  border-radius:20px;
+  padding:15px;
+  text-align:center;
+  box-shadow:0 8px 18px rgba(15,23,42,.07);
+}
+.monthlyCard span{
+  display:block;
+  font-size:14px;
+  font-weight:900;
+  color:#475569;
+  min-height:36px;
+}
+.monthlyCard b{
+  display:block;
+  font-size:30px;
+  color:#0f172a;
+  margin-top:6px;
+}
+.downMini{
+  border-color:#fecdd3;
+  background:linear-gradient(135deg,#fff1f2,#ffffff);
+}
+.monthSummaryGrid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:12px;
+  margin:14px 0 18px;
+}
+.monthSummaryCard{
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  border-radius:18px;
+  padding:14px;
+  text-align:center;
+}
+.monthSummaryCard span{
+  display:block;
+  color:#475569;
+  font-weight:900;
+}
+.monthSummaryCard b{
+  display:block;
+  font-size:28px;
+  margin-top:6px;
+  color:#ea580c;
+}
+
+
+.monthlyCard span,
+.monthSummaryCard span{
+  word-break:keep-all;
+  line-height:1.25;
+}
+
+
+.achievementGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+.achievementCard{border-radius:18px;padding:14px;text-align:center;border:2px solid #e2e8f0;background:linear-gradient(135deg,#ffffff,#f8fafc);opacity:.5}
+.achievementCard.unlocked{opacity:1;border-color:#facc15;background:linear-gradient(135deg,#fff7cc,#ffffff);box-shadow:0 8px 18px rgba(250,204,21,.25)}
+.achievementEmoji{font-size:30px;margin-bottom:6px}
+.achievementTitle{font-weight:900;color:#0f172a;font-size:15px}
+.achievementDesc{font-size:12px;color:#64748b;margin-top:4px;line-height:1.3}
+
+
+.mvpBox{
+  background:linear-gradient(135deg,#fff7ed,#fef3c7,#ffffff);
+  border:3px solid #facc15;
+  border-radius:24px;
+  padding:18px;
+  margin:16px 0;
+  text-align:center;
+  box-shadow:0 14px 28px rgba(250,204,21,.2);
+}
+.mvpBox h3{
+  margin:0 0 8px;
+  font-size:26px;
+  color:#92400e;
+}
+.mvpNames{
+  font-size:24px;
+  font-weight:900;
+  color:#ea580c;
+  margin:10px 0;
+}
+.mvpNote{
+  font-size:14px;
+  color:#78350f;
+}
+.achievementCard.mvpAch{
+  border-color:#facc15 !important;
+  background:linear-gradient(135deg,#fef3c7,#ffffff) !important;
+}
+
+
+.avatarMini{
+  width:62px;height:62px;border-radius:18px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:34px;
+  background:linear-gradient(135deg,#dbeafe,#f5f3ff);
+  margin-bottom:8px;
+  border:2px solid #bfdbfe;
+}
+.avatarWrap{
+  display:grid;
+  grid-template-columns:220px 1fr;
+  gap:18px;
+  align-items:start;
+  margin-bottom:18px;
+}
+.avatarPreview{
+  position:relative;
+  min-height:220px;
+  border-radius:28px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(135deg,#dbeafe,#ede9fe);
+  border:3px solid #bfdbfe;
+  overflow:hidden;
+}
+.avatarBase{
+  font-size:82px;
+  filter:drop-shadow(0 8px 18px rgba(0,0,0,.18));
+}
+.avatarLevelTag{
+  position:absolute;
+  top:10px;right:10px;
+  background:#0f172a;color:white;
+  border-radius:999px;
+  padding:6px 10px;
+  font-weight:900;
+}
+.avatarControls{
+  background:#f8fafc;
+  border-radius:24px;
+  padding:18px;
+  border:1px solid #e2e8f0;
+}
+.avatarControls label{
+  display:block;
+  margin-top:8px;
+  margin-bottom:4px;
+  font-weight:900;
+  color:#334155;
+}
+.lockedOption{
+  color:#94a3b8;
+}
+@media(max-width:700px){
+  .avatarWrap{
+    grid-template-columns:1fr;
+  }
+}
+
+
+.avatarProfileCard{
+ display:flex;
+ align-items:center;
+ gap:18px;
+ padding:18px;
+ border-radius:28px;
+ background:linear-gradient(135deg,#dbeafe,#ede9fe);
+ border:2px solid #bfdbfe;
+ margin-bottom:20px;
+}
+.avatarProfilePreview{
+ width:120px;
+ height:120px;
+ border-radius:24px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ font-size:64px;
+ background:white;
+ border:3px solid #c4b5fd;
+ box-shadow:0 10px 24px rgba(0,0,0,.08);
+}
+.avatarProfileName{
+ font-size:24px;
+ font-weight:900;
+ color:#0f172a;
+}
+.avatarProfileLevel{
+ font-size:18px;
+ color:#475569;
+ margin:6px 0 12px;
+ font-weight:800;
+}
+.bigAvatarBtn{
+ font-size:18px;
+ padding:12px 20px;
+ border-radius:18px;
+}
+
+.avatarModal{
+ position:fixed;
+ inset:0;
+ background:rgba(15,23,42,.7);
+ z-index:9999;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ padding:20px;
+}
+.avatarModal.hidden{
+ display:none;
+}
+.avatarModalBox{
+ width:min(1100px,95vw);
+ max-height:92vh;
+ overflow:auto;
+ background:white;
+ border-radius:34px;
+ padding:24px;
+ box-shadow:0 30px 60px rgba(0,0,0,.35);
+}
+.avatarTopBar{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ margin-bottom:18px;
+}
+.closeAvatarBtn{
+ border:none;
+ background:#ef4444;
+ color:white;
+ border-radius:14px;
+ padding:10px 14px;
+ font-size:18px;
+ cursor:pointer;
+}
+.avatarStudio{
+ display:grid;
+ grid-template-columns:420px 1fr;
+ gap:24px;
+}
+.avatarStudioPreviewWrap{
+ position:relative;
+ min-height:520px;
+ border-radius:36px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ background:linear-gradient(135deg,#dbeafe,#ede9fe);
+ border:4px solid #bfdbfe;
+ overflow:hidden;
+}
+.avatarStudioPreview{
+ font-size:180px;
+ filter:drop-shadow(0 12px 24px rgba(0,0,0,.22));
+}
+.avatarStudioLevel{
+ position:absolute;
+ top:16px;
+ right:16px;
+ background:#0f172a;
+ color:white;
+ border-radius:999px;
+ padding:8px 14px;
+ font-weight:900;
+ font-size:18px;
+}
+.avatarStudioControls{
+ display:grid;
+ gap:16px;
+}
+.avatarSection{
+ background:#f8fafc;
+ border:1px solid #e2e8f0;
+ border-radius:24px;
+ padding:16px;
+}
+.avatarSection h3,
+.unlockGuide h3{
+ margin:0 0 10px;
+ color:#0f172a;
+}
+.avatarSection select{
+ width:100%;
+ font-size:17px;
+ padding:12px;
+ border-radius:14px;
+ border:2px solid #cbd5e1;
+}
+.unlockGuide{
+ background:linear-gradient(135deg,#fff7ed,#ffffff);
+ border:2px solid #fdba74;
+ border-radius:24px;
+ padding:18px;
+}
+.unlockGuide ul{
+ margin:0;
+ padding-left:18px;
+ line-height:1.9;
+ font-weight:700;
+ color:#7c2d12;
+}
+@media(max-width:900px){
+ .avatarStudio{
+  grid-template-columns:1fr;
+ }
+ .avatarStudioPreviewWrap{
+  min-height:340px;
+ }
+ .avatarStudioPreview{
+  font-size:120px;
+ }
+ .avatarProfileCard{
+  flex-direction:column;
+  text-align:center;
+ }
+}
+
+
+/* ===== RPG Avatar Studio UI ===== */
+.avatarGameBox{
+  width:min(1180px,96vw);
+  max-height:94vh;
+  overflow:auto;
+  background:linear-gradient(135deg,#eef6ff,#ffffff);
+  border-radius:34px;
+  padding:20px;
+  box-shadow:0 30px 70px rgba(0,0,0,.38);
+  border:4px solid #bfdbfe;
+}
+.avatarGameHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:8px 8px 18px;
+}
+.avatarGameHeader h2{
+  margin:0;
+  font-size:30px;
+  color:#0f172a;
+}
+.miniLabel{
+  color:#2563eb;
+  font-size:12px;
+  letter-spacing:2px;
+  font-weight:900;
+}
+.avatarGameLayout{
+  display:grid;
+  grid-template-columns:260px 1fr 250px;
+  gap:18px;
+}
+.avatarSidePanel,
+.avatarShopPanel,
+.avatarUnlockPanel{
+  background:rgba(255,255,255,.86);
+  border:2px solid #dbeafe;
+  border-radius:28px;
+  padding:18px;
+  box-shadow:0 12px 26px rgba(15,23,42,.08);
+}
+.avatarCharacterStage{
+  height:310px;
+  border-radius:28px;
+  background:linear-gradient(135deg,#dbeafe,#f5f3ff);
+  border:4px solid #bfdbfe;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  overflow:hidden;
+}
+.avatarPixelChar{
+  font-size:138px;
+  image-rendering:pixelated;
+  filter:drop-shadow(0 12px 18px rgba(30,41,59,.22));
+  transform:translateY(8px);
+}
+.avatarNameTag{
+  margin:12px auto;
+  width:max-content;
+  padding:8px 18px;
+  border-radius:999px;
+  background:#1e3a8a;
+  color:white;
+  font-weight:900;
+}
+.avatarMiniStats{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:8px;
+  font-weight:900;
+  color:#334155;
+}
+.avatarMiniStats div{
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  padding:9px 12px;
+  border-radius:14px;
+}
+.saveAvatarBtn{
+  width:100%;
+  margin-top:14px;
+  border:none;
+  border-radius:18px;
+  padding:13px;
+  background:#2563eb;
+  color:white;
+  font-size:17px;
+  font-weight:900;
+  cursor:pointer;
+}
+.avatarTabRow{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:14px;
+}
+.avatarTab{
+  border:none;
+  background:#e0f2fe;
+  color:#1e3a8a;
+  padding:10px 14px;
+  border-radius:999px;
+  font-weight:900;
+  cursor:pointer;
+}
+.avatarTab.active{
+  background:#2563eb;
+  color:white;
+}
+.avatarItemGrid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+  gap:12px;
+}
+.avatarItemCard{
+  border:2px solid #e2e8f0;
+  background:#f8fafc;
+  border-radius:20px;
+  padding:12px;
+  min-height:112px;
+  text-align:center;
+  cursor:pointer;
+  transition:.15s;
+  position:relative;
+}
+.avatarItemCard:hover{
+  transform:translateY(-3px);
+  box-shadow:0 10px 20px rgba(15,23,42,.12);
+}
+.avatarItemCard.selected{
+  border-color:#facc15;
+  background:linear-gradient(135deg,#fef3c7,#ffffff);
+}
+.avatarItemCard.locked{
+  opacity:.45;
+  cursor:not-allowed;
+}
+.avatarItemIcon{
+  font-size:38px;
+  margin-bottom:7px;
+}
+.avatarItemName{
+  font-size:13px;
+  font-weight:900;
+  color:#0f172a;
+  line-height:1.25;
+}
+.avatarLockText{
+  font-size:11px;
+  color:#ef4444;
+  font-weight:900;
+  margin-top:5px;
+}
+.unlockList{
+  display:grid;
+  gap:10px;
+}
+.unlockList div{
+  padding:10px 12px;
+  border-radius:15px;
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  font-weight:900;
+  color:#1e293b;
+}
+.unlockList span{
+  display:block;
+  color:#2563eb;
+  margin-top:3px;
+}
+.avatarTip{
+  margin-top:14px;
+  background:#fff7ed;
+  border:2px solid #fed7aa;
+  border-radius:18px;
+  padding:12px;
+  color:#9a3412;
+  font-weight:900;
+  line-height:1.4;
+}
+.avatarProfileCard{
+  background:linear-gradient(135deg,#eff6ff,#ffffff) !important;
+}
+@media(max-width:980px){
+  .avatarGameLayout{
+    grid-template-columns:1fr;
+  }
+  .avatarCharacterStage{
+    height:260px;
+  }
+  .avatarPixelChar{
+    font-size:110px;
+  }
+}
+
+
+/* ===== REAL GAME-LIKE SVG AVATAR OVERRIDE ===== */
+.avatarMini{
+  width:70px !important;
+  height:70px !important;
+  font-size:0 !important;
+  overflow:hidden;
+}
+.avatarMini svg{
+  width:100%;
+  height:100%;
+  display:block;
+}
+.avatarProfilePreview,
+.avatarStudioPreview,
+.avatarPixelChar{
+  font-size:0 !important;
+}
+.avatarProfilePreview svg{
+  width:118px;
+  height:118px;
+}
+.avatarStudioPreview svg,
+.avatarPixelChar svg{
+  width:250px;
+  height:330px;
+}
+.avatarCharacterStage svg{
+  width:230px;
+  height:320px;
+}
+.avatarItemIcon{
+  height:78px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:0 !important;
+}
+.avatarItemIcon svg{
+  width:62px;
+  height:78px;
+}
+.avatarItemCard.locked .avatarItemIcon{
+  font-size:34px !important;
+}
+.realAvatarCard{
+  width:100%;
+  height:100%;
+}
+
+
+/* ===== FINAL RESCUE STABILITY PATCH ===== */
+#students.rescueGrid{
+  display:grid !important;
+  grid-template-columns:repeat(auto-fit,minmax(190px,1fr)) !important;
+  gap:18px !important;
+  margin-top:24px !important;
+}
+.rescueStudentCard{
+  background:rgba(255,255,255,.94);
+  border:2px solid #bfdbfe;
+  border-radius:24px;
+  padding:18px;
+  box-shadow:0 14px 30px rgba(15,23,42,.14);
+  cursor:pointer;
+  transition:.2s;
+}
+.rescueStudentCard:hover{
+  transform:translateY(-4px);
+  border-color:#60a5fa;
+}
+.rescueAvatar{
+  width:66px;
+  height:66px;
+  border-radius:20px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(135deg,#dbeafe,#fef3c7);
+  font-size:34px;
+  margin-bottom:10px;
+}
+.rescueName{font-size:20px;font-weight:900;color:#0f172a;}
+.rescueLevel{display:inline-block;margin-top:8px;padding:7px 12px;border-radius:999px;background:linear-gradient(135deg,#fb923c,#f43f5e);color:white;font-weight:900;}
+.rescueStars{font-size:23px;margin-top:10px;}
+
+</style>
+</head>
+<body>
+
+
+
+
+<div id="accessGate" class="screen">
+  <h1>🔐 6-5 레벨업 시스템</h1>
+  <div class="pageBox" style="max-width:520px;text-align:center">
+    <h2>우리 반 전용 입장</h2>
+    <p>6학년 5반 학생만 사용할 수 있어요.<br>선생님이 알려준 입장코드를 입력하세요.</p>
+    <input id="classCodeInput" type="password" placeholder="입장코드 입력">
+    <button id="enterBtn" id="enterBtn" class="blue" type="button"  type="button" onclick="window.forceEnterClass()">입장하기</button>
+  </div>
+</div>
+
+<div id="mainScreen" class="screen hidden">
+  <h1>🔥 6학년 5반 레벨업 시스템 🔥</h1>
+  <div class="nav"><button class="gray" onclick="openTeacherLogin()">🔒 교사용 설정</button></div>
+
+  <div class="top">
+<h2>🏆 학급 레벨: <span id="classLevel">0</span> / <span id="goalText">35</span></h2>
+    <div class="progress"><div class="bar" id="bar">0%</div></div>
+    <div class="rewardBoard">
+      <div class="rewardLabel">🏆 목표 달성 보상</div>
+      <div class="rewardMain" id="rewardText">🎬 영화 + 🍕 피자파티</div>
+</div>
+  </div>
+
+  <div class="questBox">
+<div class="questTitle">📅 <span id="questMonth">6월</span> 일일 퀘스트</div>
+    <div class="questCard"><div class="emoji">🌟</div><div class="badge">일일퀘스트 1</div><strong id="quest1">하루 40분 이상<br>스스로 공부하기</strong>
+</div>
+    <div class="questCard"><div class="emoji">🚀</div><div class="badge">일일퀘스트 2</div><strong id="quest2">20분 이상<br>독서하기</strong>
+</div>
+  </div>
+
+  <div class="grid" id="students"></div>
+</div>
+
+<div id="studentLogin" class="screen hidden">
+  <h1>🔐 나의 페이지 입장</h1>
+  <div class="pageBox" style="max-width:520px">
+    <button class="gray" onclick="closeStudentLogin()">← 돌아가기</button>
+    <h2 id="studentLoginName"></h2>
+    <p>처음 들어가는 경우, 사용할 개인 비밀번호를 정해 입력하세요.<br>다음부터는 같은 비밀번호로 입장합니다.</p>
+    <input id="studentPw" type="password" placeholder="개인 비밀번호 입력">
+    <button class="blue" onclick="studentLogin()">입장하기</button>
+  </div>
+</div>
+
+<div id="personalScreen" class="screen hidden">
+  <h1>✨ 나의 레벨업 페이지 ✨</h1>
+  <div class="pageBox">
+    <button class="gray" onclick="goBack()">← 전체 화면으로</button>
+    <h2 id="personalName"></h2>
+    <div class="level" id="personalLevel"></div>
+    <div class="stars" id="personalStars"></div>
+    
+    
+<h3>🎮 나의 아바타</h3>
+
+<div class="avatarProfileCard">
+  <div class="avatarProfilePreview" id="avatarPreviewMini">🙂</div>
+
+  <div class="avatarProfileInfo">
+    <div class="avatarProfileName">나의 캐릭터</div>
+    <div class="avatarProfileLevel" id="avatarProfileLevel">Lv.0</div>
+    <button class="yellow bigAvatarBtn" onclick="openAvatarCustomizer()">🎮 아바타 꾸미기</button>
+  </div>
+</div>
+
+
+<div id="avatarModal" class="avatarModal hidden">
+  <div class="avatarGameBox">
+
+    <div class="avatarGameHeader">
+      <div>
+        <div class="miniLabel">MY AVATAR STUDIO</div>
+        <h2>🎮 아바타 꾸미기</h2>
+      </div>
+      <button class="closeAvatarBtn" onclick="closeAvatarCustomizer()">✖</button>
+    </div>
+
+    <div class="avatarGameLayout">
+
+      <aside class="avatarSidePanel">
+        <h3>내 아바타</h3>
+        <div class="avatarCharacterStage" id="avatarStage">
+          <div class="avatarPixelChar" id="avatarPreview">🙂</div>
+        </div>
+        <div class="avatarNameTag" id="avatarProfileLevel">Lv.0</div>
+        <div class="avatarMiniStats">
+          <div>⭐ 별 <b id="avatarStarInfo">0/5</b></div>
+          <div>🏅 업적 <b id="avatarAchieveInfo">0</b></div>
+          <div>🔥 성장 <b id="avatarPointInfo">0</b></div>
+        </div>
+        <button class="saveAvatarBtn" onclick="closeAvatarCustomizer()">✅ 저장하고 닫기</button>
+      </aside>
+
+      <main class="avatarShopPanel">
+
+        <div class="avatarTabRow">
+          <button class="avatarTab active" onclick="showAvatarCategory('base', this)">기본 캐릭터</button>
+          <button class="avatarTab" onclick="showAvatarCategory('hair', this)">머리</button>
+          <button class="avatarTab" onclick="showAvatarCategory('cloth', this)">의상</button>
+          <button class="avatarTab" onclick="showAvatarCategory('acc', this)">악세서리</button>
+          <button class="avatarTab" onclick="showAvatarCategory('bg', this)">배경</button>
+        </div>
+
+        <div id="avatarItemGrid" class="avatarItemGrid"></div>
+
+      </main>
+
+      <aside class="avatarUnlockPanel">
+        <h3>🔓 해금 조건</h3>
+        <div class="unlockList">
+          <div>Lv.3 <span>🧢 캡모자</span></div>
+          <div>Lv.5 <span>🕶 선글라스</span></div>
+          <div>Lv.7 <span>🧥 레전드 재킷</span></div>
+          <div>Lv.10 <span>👑 왕관</span></div>
+          <div>Lv.15 <span>🌃 네온 배경</span></div>
+          <div>Lv.18 <span>🌌 우주 배경</span></div>
+          <div>Lv.20 <span>🏆 MVP 배경</span></div>
+        </div>
+        <div class="avatarTip">
+          아이템은 레벨이 오르면 자동으로 해금돼요!
+        </div>
+      </aside>
+
+    </div>
+  </div>
+</div>
+
+<div class="stats">
+
+
+      <div class="stat">현재 별<b id="starCount">0</b></div>
+      <div class="stat">개인 레벨<b id="personalLevelNum">0</b></div>
+      <div class="stat">일일퀘스트 1<b id="studyCount">0</b></div>
+      <div class="stat">일일퀘스트 2<b id="readCount">0</b></div>
+    </div>
+    <h3>오늘 퀘스트 입력</h3>
+    <button class="blue" onclick="questStar('study')" id="questBtn1">🌟 공부 완료</button>
+    <button class="purple" onclick="questStar('read')" id="questBtn2">🚀 독서 완료</button>
+    <div class="dashboardSection">
+      <h3>🏆 나의 성장 대시보드</h3>
+
+      <div class="growthBox">
+        <div class="growthTitle">⭐ 별 성장 게이지</div>
+        <div class="bigStars" id="bigStarGauge">☆☆☆☆☆</div>
+      </div>
+
+      <div class="questStatsGrid">
+        <div class="questStatCard">
+          <div class="questEmoji">📚</div>
+          <div class="questStatTitle" id="quest1StatTitle">퀘스트 1</div>
+          <div class="questStatValue" id="studyStat">0회</div>
+        </div>
+
+        <div class="questStatCard">
+          <div class="questEmoji">📖</div>
+          <div class="questStatTitle" id="quest2StatTitle">퀘스트 2</div>
+          <div class="questStatValue" id="readStat">0회</div>
+        </div>
+
+        <div class="questStatCard">
+          <div class="questEmoji">🔥</div>
+          <div class="questStatTitle">총 성장 포인트</div>
+          <div class="questStatValue" id="totalStat">0</div>
+        </div>
+
+        <div class="questStatCard">
+          <div class="questEmoji">🏆</div>
+          <div class="questStatTitle">현재 레벨</div>
+          <div class="questStatValue" id="levelStat">Lv.0</div>
+        </div>
+
+        <div class="questStatCard dangerCard">
+          <div class="questEmoji">⚠️</div>
+          <div class="questStatTitle">별 감소</div>
+          <div class="questStatValue" id="downStat">0회</div>
+        </div>
+      </div>
+
+      <h3 id="personalMonthTitle">📅 6월 나의 월간 통계</h3>
+      <div class="monthlyGrid">
+        <div class="monthlyCard"><span id="monthQ1Label">📚 이번 달 퀘스트</span><b id="monthQ1">0</b></div>
+        <div class="monthlyCard"><span id="monthQ2Label">📖 이번 달 퀘스트</span><b id="monthQ2">0</b></div>
+        <div class="monthlyCard"><span>🔥 이번 달 총 성장 포인트</span><b id="monthStars">0</b></div>
+        <div class="monthlyCard"><span>🏆 이번 달 레벨업</span><b id="monthLevelUps">0</b></div>
+        <div class="monthlyCard downMini"><span>⚠️ 이번 달 별 감소</span><b id="monthDown">0</b></div>
+      </div>
+
+      
+<h3>🏅 나의 업적 보관함</h3>
+<div class="achievementGrid" id="achievementGrid"></div>
+
+<h3>🎖 나의 뱃지</h3>
+
+      <div class="badgeRow" id="personalBadges"></div>
+
+      <h3>🕒 최근 활동 타임라인</h3>
+      <div class="timelineBox" id="personalLogs"></div>
+    </div>
+  </div>
+</div>
+
+<div id="teacherLogin" class="screen hidden">
+  <h1>🔒 교사용 설정</h1>
+  <div class="pageBox" style="max-width:480px">
+    <button class="gray" onclick="closeTeacherLogin()">← 돌아가기</button>
+    <h2>비밀번호 입력</h2>
+    <input id="teacherPw" type="password" placeholder="비밀번호">
+    <button class="blue" onclick="teacherLogin()">입장</button>
+  </div>
+</div>
+
+<div id="teacherScreen" class="screen hidden">
+  <h1>🧑‍🏫 교사용 설정 페이지</h1>
+  <div class="nav">
+    <button class="gray" onclick="teacherBack()">← 학생 화면</button>
+    <button class="yellow" onclick="showTeacherTab('settingsTab')">알림판/보상 설정</button>
+    <button class="blue" onclick="showTeacherTab('classTab')">학급 레벨 조정</button>
+    <button class="purple" onclick="showTeacherTab('studentManageTab')">학생별 별 관리</button>
+    <button class="green" onclick="showTeacherTab('statusTab')">전체 현황</button>
+    <button class="yellow" onclick="showTeacherTab('monthTab')">월간 통계</button>
+    <button class="purple" onclick="showTeacherTab('achievementTab')">업적 현황</button>
+    <button class="red" onclick="showTeacherTab('resetTab')">초기화</button>
+  </div>
+
+  <div id="settingsTab" class="pageBox teacherTab">
+    <h2>📅 일일퀘스트 알림판 / 보상 수정</h2>
+    <label>월 표시</label><input id="setMonth">
+    <label>일일퀘스트 1 버튼 문구 / 안내 내용</label><input id="setStudy">
+    <div class="fileNote">여기에 적은 내용이 학생 개인 페이지의 클릭 버튼에도 표시됩니다.</div>
+    <div class="fileNote">이미지는 사용하지 않는 깔끔한 버전입니다.</div>
+    <label>일일퀘스트 2 버튼 문구 / 안내 내용</label><input id="setRead">
+    <div class="fileNote">여기에 적은 내용이 학생 개인 페이지의 클릭 버튼에도 표시됩니다.</div>
+    <div class="fileNote">이미지는 사용하지 않는 깔끔한 버전입니다.</div>
+    <label>목표 달성 보상</label><input id="setReward">
+    <div class="fileNote">보상판은 글씨 중심으로 깔끔하게 표시됩니다.</div>
+    <label>학급 목표 레벨</label><input id="setGoal" type="number">
+    <label>우리 반 입장코드 변경</label><input id="setClassCode" placeholder="새 입장코드 입력">
+    <div class="fileNote">입장 화면에는 코드 힌트가 표시되지 않습니다.</div>
+    <label>교사용 비밀번호 변경</label><input id="setPw" type="password" placeholder="새 비밀번호 입력 시 변경">
+    <button class="green" onclick="saveSettings()">설정 저장</button>
+  </div>
+
+  <div id="classTab" class="pageBox teacherTab hidden">
+    <h2>🏆 학급 전체 레벨 조정</h2>
+    <p>현재 학급 레벨: <b id="teacherClassLevel"></b></p>
+    <button class="green" onclick="changeClassLevel(1)">학급 레벨 +1</button>
+    <button class="red" onclick="changeClassLevel(-1)">학급 레벨 -1</button>
+  </div>
+
+  <div id="studentManageTab" class="pageBox teacherTab hidden">
+    <h2>🧑‍🏫 학생별 별 관리</h2>
+    <p>교사가 학생별로 별을 추가하거나 감소할 수 있습니다.</p>
+    <div class="grid" id="teacherStudentCards"></div>
+  </div>
+
+  <div id="statusTab" class="pageBox teacherTab hidden">
+    <h2>📊 아이들 전체 레벨업 현황</h2>
+    <div id="statusTable"></div>
+  </div>
+
+  <div id="monthTab" class="pageBox teacherTab hidden">
+    <h2 id="teacherMonthTitle">📅 6월 전체 학생 월간 통계</h2>
+    <p>현재 교사용 설정의 월 표시를 기준으로 통계를 보여줍니다. 앞으로 기록은 월별로 자동 누적됩니다.</p>
+    <div id="teacherMonthSummary"></div>
+    <div id="monthlyMvpBox" class="mvpBox"></div>
+    <div id="teacherMonthTable"></div>
+  </div>
+
+  <div id="achievementTab" class="pageBox teacherTab hidden">
+    <h2>🏅 전체 업적 현황</h2>
+    <div id="achievementTeacherTable"></div>
+  </div>
+
+  <div id="resetTab" class="pageBox teacherTab hidden">
+    <h2>⚠️ 전체 초기화</h2>
+    <p>학생 별, 개인 레벨, 학급 레벨, 기록, 학생 개인 비밀번호까지 모두 초기화합니다. 초기화 후 입장코드는 0665로 돌아갑니다.</p>
+    <button class="red" onclick="resetAll()">모든 내용 초기화</button>
+  </div>
+</div>
+
+<div id="syncStatus" class="sync">☁️ Firebase 연결 중...</div>
+
+
+
+<script>
+(function(){
+  const RESCUE_STUDENTS = [
+    "1번 고채원","2번 구준서","3번 김가은","4번 김도하","5번 김도현","6번 김예준","7번 김지후","8번 김태완","9번 류수연","10번 박리환","11번 손승민","12번 신미경","13번 유예은","14번 유혜선","15번 육세연","16번 윤이서","17번 이가영","18번 이다정","19번 이세영","20번 장준석","21번 정다은","22번 황윤서"
+  ];
+
+  function safeShowMain(){
+    const access = document.getElementById("accessGate");
+    const main = document.getElementById("mainScreen");
+    if(access) access.classList.add("hidden");
+    if(main) main.classList.remove("hidden");
+  }
+
+  function fallbackStudentCards(){
+    const wrap = document.getElementById("students");
+    if(!wrap) return;
+    if(wrap.children.length > 0) return;
+
+    wrap.classList.add("rescueGrid");
+    wrap.innerHTML = RESCUE_STUDENTS.map((name,idx)=>`
+      <div class="rescueStudentCard" onclick="window.openStudent ? window.openStudent('${name}') : alert('잠시 후 다시 눌러주세요. Firebase 연결 중입니다.')">
+        <div class="rescueAvatar">🧑‍🎓</div>
+        <div class="rescueName">${name}</div>
+        <div class="rescueLevel">개인 Lv.0</div>
+        <div class="rescueStars">☆☆☆☆☆</div>
+        <div style="margin-top:10px;color:#2563eb;font-weight:800;">🔐 개인 페이지</div>
+      </div>
+    `).join("");
+  }
+
+  function tryRenderManyTimes(){
+    const tries = [0,200,600,1200,2200,3500];
+    tries.forEach(ms=>{
+      setTimeout(()=>{
+        try{
+          if(typeof window.render === "function"){
+            window.render();
+            const wrap = document.getElementById("students");
+            if(wrap && wrap.children.length > 0) wrap.classList.remove("rescueGrid");
+          }
+        }catch(e){
+          console.warn("render retry failed", e);
+        }
+        fallbackStudentCards();
+      }, ms);
+    });
+  }
+
+  window.forceEnterClass = function(){
+    const inputEl = document.getElementById("classCodeInput");
+    const input = inputEl ? String(inputEl.value || "").trim() : "";
+    let saved = "0665";
+    try{
+      if(window.state && window.state.classAccessCode) saved = String(window.state.classAccessCode).trim();
+    }catch(e){}
+
+    if(input === "0665" || input === saved){
+      try{ sessionStorage.setItem("class_access_ok","yes"); }catch(e){}
+      safeShowMain();
+      tryRenderManyTimes();
+      return true;
+    }
+
+    alert("입장코드가 달라요. 선생님께 확인하세요.");
+    return false;
+  };
+
+  document.addEventListener("DOMContentLoaded", ()=>{
+    const inputEl = document.getElementById("classCodeInput");
+    if(inputEl){
+      inputEl.addEventListener("keydown", e=>{
+        if(e.key==="Enter") window.forceEnterClass();
+      });
+    }
+    const btn = document.getElementById("enterBtn");
+    if(btn){
+      btn.addEventListener("click", e=>{
+        e.preventDefault();
+        window.forceEnterClass();
+      });
+    }
+    if(sessionStorage.getItem("class_access_ok")==="yes"){
+      safeShowMain();
+      tryRenderManyTimes();
+    }
+  });
+})();
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAoB4zwYiwXGzVMR9IotMHOU_mYtdtK2zw",
+  authDomain: "sd0665.firebaseapp.com",
+  projectId: "sd0665",
+  storageBucket: "sd0665.firebasestorage.app",
+  messagingSenderId: "992499482706",
+  appId: "1:992499482706:web:62d735197b07e7fd339f8b",
+  measurementId: "G-JHBEN9R33V"
+};
+
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const docRef = doc(db, "levelup", "class65");
+const studentNames = ["1번 고채원", "2번 구준서", "3번 김가은", "4번 김도하", "5번 김도현", "6번 김예준", "7번 김지후", "8번 김태완", "9번 류수연", "10번 박리환", "11번 손승민", "12번 신미경", "13번 유예은", "14번 유혜선", "15번 육세연", "16번 윤이서", "17번 이가영", "18번 이다정", "19번 이세영", "20번 장준석", "21번 정다은", "22번 황윤서"];
+
+function defaultState(){
+  return {
+    password:"1234",
+    classAccessCode:"0665",
+    classLevel:0,
+    goal:35,
+    month:"6월",
+    studyQuest:"하루 40분 이상<br>스스로 공부하기",
+    readQuest:"20분 이상<br>독서하기",
+    reward:"🎬 영화 + 🍕 피자파티",
+    quest1Image:"",
+    quest2Image:"",
+    rewardImage:"",
+    students:{}
+  };
+}
+
+let state = defaultState();
+let currentStudent = null;
+let saveTimer = null;
+let remoteReady = false;
+let selfSaving = false;
+let resetInProgress = false;
+
+function setSync(text){ document.getElementById("syncStatus").textContent = text; }
+function ensureData(name){
+  if(!state.students) state.students={};
+  if(!state.students[name]) state.students[name]={stars:0, personalLevel:0, study:0, read:0, praise:0, down:0, password:"", logs:[]};
+}
+function normalizeState(s){
+  state = Object.assign(defaultState(), s || {});
+  if(!state.students) state.students={};
+  studentNames.forEach(name=>{ ensureData(name); ensureAvatar(name); });
+}
+
+async function saveRemote(){
+  if(!remoteReady) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async()=>{
+    try{
+      selfSaving = true;
+      setSync("☁️ 저장 중...");
+      await setDoc(docRef, JSON.parse(JSON.stringify(state)));
+      setSync("☁️ 실시간 저장 완료");
+      setTimeout(()=>selfSaving=false, 300);
+    }catch(e){
+      console.error(e);
+      selfSaving=false;
+      setSync("⚠️ 저장 실패");
+      alert("저장에 실패했습니다. Firestore 규칙이 테스트 모드인지 확인해 주세요.");
+    }
+  }, 350);
+}
+window.saveRemote = saveRemote;
+
+async function initFirebase(){
+  window.state = state;
+  try{
+    const snap = await getDoc(docRef);
+    if(snap.exists()) normalizeState(snap.data());
+    else {
+      normalizeState(defaultState());
+      await setDoc(docRef, JSON.parse(JSON.stringify(state)));
+    }
+    remoteReady = true;
+    setSync("☁️ Firebase 연결 완료");
+    showInitialScreen();
+    render();
+
+    onSnapshot(docRef, (docSnap)=>{
+      if(!docSnap.exists()) return;
+      normalizeState(docSnap.data());
+      setSync("☁️ 실시간 동기화됨");
+      render();
+      if(currentStudent) renderPersonal(currentStudent);
+      if(!document.getElementById("teacherScreen").classList.contains("hidden")) fillTeacher();
+    });
+  }catch(e){
+    console.error(e);
+    setSync("⚠️ Firebase 연결 실패");
+    console.warn("Firebase 연결 실패", e);
+  }
+}
+
+function cuteSound(){
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [784,988,1175,1568].forEach((freq,i)=>{
+      const osc=ctx.createOscillator(), gain=ctx.createGain();
+      osc.type="sine"; osc.frequency.value=freq;
+      gain.gain.setValueAtTime(.001,ctx.currentTime+i*.07);
+      gain.gain.exponentialRampToValueAtTime(.18,ctx.currentTime+i*.07+.02);
+      gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+i*.07+.13);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(ctx.currentTime+i*.07); osc.stop(ctx.currentTime+i*.07+.15);
+    });
+  }catch(e){}
+}
+function toast(msg){ const t=document.createElement("div"); t.className="toast"; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),1800); }
+function addLog(name,text){ 
+  ensureData(name); 
+  const monthLabel = String(state.month || "6월").trim();
+  state.students[name].logs.unshift(new Date().toLocaleString("ko-KR")+" · ["+monthLabel+"] "+text); 
+  state.students[name].logs=state.students[name].logs.slice(0,80); 
+}
+function getBadges(name){
+  ensureData(name); const s=state.students[name]; const arr=[];
+  if(s.personalLevel>=1) arr.push("🌱 첫 레벨업");
+  if(s.study>=3) arr.push("🌟 퀘스트1 달인");
+  if(s.read>=3) arr.push("🚀 퀘스트2 달인");
+  if(s.study>=5 && s.read>=5) arr.push("⚡ 균형성장");
+  if(s.personalLevel>=3) arr.push("🔥 꾸준함");
+  if(s.personalLevel>=5) arr.push("👑 레벨마스터");
+  return arr;
+}
+function addStar(name,reason){
+  ensureData(name); const s=state.students[name];
+  s.stars += 1;
+  if(reason.includes(plainQuestText(state.studyQuest))) s.study += 1;
+  if(reason.includes(plainQuestText(state.readQuest))) s.read += 1;
+  if(reason.includes("칭찬")) s.praise += 1;
+  addLog(name,"⭐ 별 +1: "+reason);
+  cuteSound();
+  if(s.stars>=5){
+    s.stars=0; s.personalLevel+=1; state.classLevel+=1;
+    addLog(name,"🎉 별 5개 달성 → 개인 레벨 +1, 학급 레벨 +1");
+    levelUpModal(name);
+    if(state.classLevel>=state.goal) rewardModal();
+  }
+  checkAchievements(name);
+  saveRemote(); render(); if(currentStudent===name) renderPersonal(name);
+}
+function removeStar(name,reason){
+  ensureData(name); const s=state.students[name]; let changed=false;
+  if(s.stars>0){ s.stars-=1; changed=true; addLog(name,"⚠️ 별 감소 -1: "+reason); toast("별이 1개 감소했습니다."); }
+  else if(s.personalLevel>0){ s.personalLevel-=1; s.stars=4; state.classLevel=Math.max(0,state.classLevel-1); changed=true; addLog(name,"⚠️ 별 5개 감소 → 개인 레벨 -1, 학급 레벨 -1: "+reason); toast("개인 레벨이 1 감소하여 학급 레벨도 -1 되었습니다."); }
+  if(changed) s.down+=1; else alert("이미 별과 개인 레벨이 모두 0입니다.");
+  checkAchievements(name);
+  saveRemote(); render(); if(currentStudent===name) renderPersonal(name);
+}
+function setImageView(id,src){ const img=document.getElementById(id); if(!img) return; if(src){img.src=src; img.classList.remove("hidden");} else {img.removeAttribute("src"); img.classList.add("hidden");} }
+window.loadImageFile = function(input,key){
+  const file=input.files && input.files[0]; 
+  if(!file) return;
+
+  if(file.size > 8 * 1024 * 1024){
+    alert("이미지는 8MB 이하 파일을 넣어주세요.");
+    input.value="";
+    return;
+  }
+
+  const img = new Image();
+  const reader = new FileReader();
+
+  reader.onload = e => {
+    img.onload = () => {
+      const maxW = 1200;
+      const maxH = 900;
+      let w = img.width;
+      let h = img.height;
+
+      const ratio = Math.min(maxW / w, maxH / h, 1);
+      w = Math.round(w * ratio);
+      h = Math.round(h * ratio);
+
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, w, h);
+
+      let quality = 0.82;
+      let dataUrl = canvas.toDataURL("image/jpeg", quality);
+
+      while(dataUrl.length > 850000 && quality > 0.35){
+        quality -= 0.08;
+        dataUrl = canvas.toDataURL("image/jpeg", quality);
+      }
+
+      if(dataUrl.length > 950000){
+        alert("이미지를 자동 압축했지만 아직 큽니다. 조금 더 작은 이미지를 사용해 주세요.");
+        input.value="";
+        return;
+      }
+
+      state[key]=dataUrl;
+      saveRemote(); 
+      fillTeacher(); 
+      render(); 
+      toast("이미지가 압축되어 저장되었습니다.");
+    };
+    img.onerror = () => {
+      alert("이미지를 읽지 못했습니다. 다른 이미지 파일로 시도해 주세요.");
+      input.value="";
+    };
+    img.src = e.target.result;
+  };
+
+  reader.readAsDataURL(file);
+}
+
+function updateTop(){
+  document.getElementById("classLevel").innerText=state.classLevel;
+  document.getElementById("goalText").innerText=state.goal;
+  document.getElementById("rewardText").innerHTML=state.reward;
+  document.getElementById("questMonth").innerText=state.month;
+  document.getElementById("quest1").innerHTML=state.studyQuest;
+  document.getElementById("quest2").innerHTML=state.readQuest;
+  setImageView("quest1ImageView",state.quest1Image);
+  setImageView("quest2ImageView",state.quest2Image);
+  setImageView("rewardImageView",state.rewardImage);
+  const percent=Math.min((state.classLevel/state.goal)*100,100);
+  const bar=document.getElementById("bar"); bar.style.width=percent+"%"; bar.innerText=Math.floor(percent)+"%";
+}
+window.render = render;
+window.render = render;
+function render(){
+  window.state = state;
+  studentNames.forEach(name=>{ ensureData(name); ensureAvatar(name); }); updateTop();
+  const wrap=document.getElementById("students"); wrap.innerHTML="";
+  studentNames.forEach(name=>{
+    const s=state.students[name]; const div=document.createElement("div"); div.className="card";
+    div.innerHTML=`<div class="avatarMini" id="avatarMini-${name}">🙂</div><div class="name" onclick="openStudent('${name}')">${name}</div><div class="level">개인 Lv.${s.personalLevel}</div><div class="stars">${"⭐".repeat(s.stars)}${"☆".repeat(5-s.stars)}</div><div class="badgeRow">${getBadges(name).map(b=>`<span class="badge">${b}</span>`).join("") || '<span class="badge">새싹 대기중</span>'}</div><div class="badge">🔐 개인 페이지</div>`;
+    wrap.appendChild(div);
+  });
+  if(typeof renderMiniAvatars==="function") renderMiniAvatars();
+}
+function showOnly(id){ ["accessGate","mainScreen","studentLogin","personalScreen","teacherLogin","teacherScreen"].forEach(x=>document.getElementById(x).classList.add("hidden")); document.getElementById(id).classList.remove("hidden"); }
+function showInitialScreen(){ if(sessionStorage.getItem("class_access_ok")==="yes"){ showOnly("mainScreen"); setTimeout(()=>{ try{render();}catch(e){} },50); } else showOnly("accessGate"); } else { showOnly("accessGate"); } }
+window.checkClassCode=function(){ return window.forceEnterClass(); }
+window.openStudent=function(name){ currentStudent=name; showOnly("studentLogin"); document.getElementById("studentLoginName").innerText=name; document.getElementById("studentPw").value=""; setTimeout(()=>document.getElementById("studentPw").focus(),100); }
+window.closeStudentLogin=function(){ currentStudent=null; showOnly("mainScreen"); }
+window.studentLogin=function(){
+  if(!currentStudent) return; ensureData(currentStudent);
+  const s=state.students[currentStudent]; const pw=document.getElementById("studentPw").value.trim();
+  if(!pw){ alert("비밀번호를 입력해 주세요."); return; }
+  if(!s.password){ s.password=pw; addLog(currentStudent,"🔐 개인 비밀번호 설정"); saveRemote(); toast("개인 비밀번호가 설정되었습니다."); }
+  if(pw===s.password){ showOnly("personalScreen"); renderPersonal(currentStudent); } else alert("비밀번호가 달라요.");
+}
+window.goBack=function(){ currentStudent=null; showOnly("mainScreen"); render(); }
+window.questStar=function(type){ if(!currentStudent) return; if(type==="study") addStar(currentStudent, plainQuestText(state.studyQuest) + " 완료");
+  else addStar(currentStudent, plainQuestText(state.readQuest) + " 완료"); }
+
+function plainQuestText(htmlText){
+  const div = document.createElement("div");
+  div.innerHTML = htmlText || "";
+  return (div.textContent || div.innerText || "").replace(/\s+/g, " ").trim();
+}
+
+function updatePersonalQuestButtons(){
+  const b1 = document.getElementById("questBtn1");
+  const b2 = document.getElementById("questBtn2");
+  if(b1) b1.textContent = "🌟 " + (plainQuestText(state.studyQuest) || "공부") + " 완료";
+  if(b2) b2.textContent = "🚀 " + (plainQuestText(state.readQuest) || "독서") + " 완료";
+}
+
+
+
+function statsMonthInfo(){
+  const now = new Date();
+  const monthText = String(state.month || "6월");
+  const match = monthText.match(/(\d+)/);
+  const month = match ? Number(match[1]) : 6;
+  const year = now.getFullYear();
+  return {
+    year,
+    month,
+    label: month + "월",
+    key: year + ". " + month + "."
+  };
+}
+
+function calcMonthlyStats(name){
+  ensureData(name);
+  const logs = state.students[name].logs || [];
+  const info = statsMonthInfo();
+  const result = { stars:0, levelUps:0, q1:0, q2:0, down:0 };
+  const q1Text = plainQuestText(state.studyQuest);
+  const q2Text = plainQuestText(state.readQuest);
+  const monthLabel = info.label;
+
+  logs.forEach(log=>{
+    const textRaw = log.split(" · ").slice(1).join(" · ");
+
+    // 새 기록은 [6월] 같은 월 태그를 기준으로 계산
+    const hasMonthTag = /\[\d+월\]/.test(textRaw);
+    if(hasMonthTag && !textRaw.includes("[" + monthLabel + "]")) return;
+
+    // 예전 기록은 월 태그가 없으므로 현재 설정 월 통계에 포함
+    const cleanText = textRaw.replace(/\[\d+월\]\s*/g, "");
+
+    if(cleanText.includes("별 +1")) result.stars += 1;
+    if(cleanText.includes("레벨 +1") || cleanText.includes("별 5개")) result.levelUps += 1;
+    if(cleanText.includes("별 감소") || cleanText.includes("별 -1") || cleanText.includes("레벨 -1")) result.down += 1;
+
+    if(q1Text && cleanText.includes(q1Text)) result.q1 += 1;
+    else if(cleanText.includes("공부")) result.q1 += 1;
+
+    if(q2Text && cleanText.includes(q2Text)) result.q2 += 1;
+    else if(cleanText.includes("독서")) result.q2 += 1;
+  });
+
+  return result;
+}
+
+function renderTeacherMonthlyStats(){
+  const rows = [];
+  let totalStars=0, totalLevelUps=0, totalQ1=0, totalQ2=0, totalDown=0;
+
+  studentNames.forEach(name=>{
+    const m = calcMonthlyStats(name);
+    totalStars += m.stars;
+    totalLevelUps += m.levelUps;
+    totalQ1 += m.q1;
+    totalQ2 += m.q2;
+    totalDown += m.down;
+    rows.push({name, ...m});
+  });
+
+  rows.sort((a,b)=>(b.stars + b.levelUps*5) - (a.stars + a.levelUps*5));
+
+  const info = statsMonthInfo();
+  const q1Title = plainQuestText(state.studyQuest) || "퀘스트 1";
+  const q2Title = plainQuestText(state.readQuest) || "퀘스트 2";
+
+  if(document.getElementById("teacherMonthTitle")){
+    document.getElementById("teacherMonthTitle").innerText = "📅 " + info.label + " 전체 학생 월간 통계";
+  }
+
+  const summary = `
+    <div class="monthSummaryGrid">
+      <div class="monthSummaryCard"><span>${info.label} 별 획득</span><b>${totalStars}</b></div>
+      <div class="monthSummaryCard"><span>${info.label} 레벨업</span><b>${totalLevelUps}</b></div>
+      <div class="monthSummaryCard"><span>${q1Title}</span><b>${totalQ1}</b></div>
+      <div class="monthSummaryCard"><span>${q2Title}</span><b>${totalQ2}</b></div>
+      <div class="monthSummaryCard"><span>${info.label} 별 감소</span><b>${totalDown}</b></div>
+    </div>
+  `;
+  document.getElementById("teacherMonthSummary").innerHTML = summary;
+
+  renderMonthlyMvpBox();
+
+  document.getElementById("teacherMonthTable").innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>순위</th><th>학생</th><th>별 획득</th><th>레벨업</th><th>${q1Title}</th><th>${q2Title}</th><th>별 감소</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map((r,i)=>`
+          <tr>
+            <td>${i+1}</td><td>${r.name}</td><td>${r.stars}</td><td>${r.levelUps}</td><td>${r.q1}</td><td>${r.q2}</td><td>${r.down}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+
+
+const ACHIEVEMENTS = [
+ {id:"first_level", emoji:"🚀", title:"첫 레벨업", desc:"개인 레벨 1 달성", check:s=>s.personalLevel>=1},
+ {id:"lv5", emoji:"🥉", title:"브론즈 성장러", desc:"개인 레벨 5 달성", check:s=>s.personalLevel>=5},
+ {id:"lv10", emoji:"🥈", title:"실버 성장러", desc:"개인 레벨 10 달성", check:s=>s.personalLevel>=10},
+ {id:"lv15", emoji:"🥇", title:"골드 성장러", desc:"개인 레벨 15 달성", check:s=>s.personalLevel>=15},
+ {id:"lv20", emoji:"💎", title:"다이아 성장러", desc:"개인 레벨 20 달성", check:s=>s.personalLevel>=20},
+ {id:"lv25", emoji:"👑", title:"마스터 성장러", desc:"개인 레벨 25 달성", check:s=>s.personalLevel>=25},
+ {id:"lv30", emoji:"⚡", title:"전설의 성장러", desc:"개인 레벨 30 달성", check:s=>s.personalLevel>=30},
+ {id:"lv35", emoji:"🔥", title:"신화의 성장러", desc:"개인 레벨 35 달성", check:s=>s.personalLevel>=35},
+ {id:"lv40", emoji:"🌌", title:"우주 최강 성장러", desc:"개인 레벨 40 달성", check:s=>s.personalLevel>=40},
+
+ {id:"study_seed", emoji:"🌱", title:"공부 새싹", desc:"공부 퀘스트 5회", check:s=>s.study>=5},
+ {id:"study10", emoji:"📘", title:"공부 입문자", desc:"공부 퀘스트 10회", check:s=>s.study>=10},
+ {id:"study20", emoji:"📗", title:"공부 챔피언", desc:"공부 퀘스트 20회", check:s=>s.study>=20},
+ {id:"study30", emoji:"📕", title:"공부 마스터", desc:"공부 퀘스트 30회", check:s=>s.study>=30},
+ {id:"study40", emoji:"🏫", title:"공부의 신", desc:"공부 퀘스트 40회", check:s=>s.study>=40},
+
+ {id:"book_worm", emoji:"📚", title:"책벌레", desc:"독서 퀘스트 10회", check:s=>s.read>=10},
+ {id:"read20", emoji:"📖", title:"독서 마스터", desc:"독서 퀘스트 20회", check:s=>s.read>=20},
+ {id:"read30", emoji:"🏛️", title:"도서관 지배자", desc:"독서 퀘스트 30회", check:s=>s.read>=30},
+
+ {id:"steady", emoji:"💎", title:"꾸준함의 힘", desc:"별 감소 0회 + 레벨3", check:s=>s.down===0 && s.personalLevel>=3},
+ {id:"challenge", emoji:"⚡", title:"도전 챔피언", desc:"퀘스트 총 30회", check:s=>(s.study+s.read)>=30},
+ {id:"legend", emoji:"🏆", title:"레전드", desc:"개인 레벨 10 달성", check:s=>s.personalLevel>=10},
+];
+
+function ensureAchievementData(name){
+  ensureData(name);
+  if(!state.students[name].achievements) state.students[name].achievements = [];
+}
+
+function checkAchievements(name){
+  ensureAchievementData(name);
+  const s = state.students[name];
+
+  ACHIEVEMENTS.forEach(a=>{
+    if(a.check(s) && !s.achievements.includes(a.id)){
+      s.achievements.push(a.id);
+      addLog(name, "🏅 업적 달성: " + a.title);
+      achievementModal(a);
+    }
+  });
+}
+
+function achievementModal(a){
+  const m=document.createElement("div");
+  m.className="modal";
+  m.innerHTML=`<div class="modalBox">
+    <h2>🏅 업적 달성!</h2>
+    <div style="font-size:58px">${a.emoji}</div>
+    <h3>${a.title}</h3>
+    <p>${a.desc}</p>
+    <button class="yellow" onclick="this.closest('.modal').remove()">확인</button>
+  </div>`;
+  document.body.appendChild(m);
+  cuteSound();
+}
+
+function renderAchievementGrid(name){
+  ensureAchievementData(name);
+  const unlocked = state.students[name].achievements || [];
+  const mvpCards = unlocked
+    .filter(id=>id.startsWith("mvp_"))
+    .map(getMvpAchievementCard)
+    .filter(Boolean);
+
+  const baseCards = ACHIEVEMENTS.map(a=>{
+    const on = unlocked.includes(a.id);
+    return `<div class="achievementCard ${on?'unlocked':''}">
+      <div class="achievementEmoji">${on ? a.emoji : '🔒'}</div>
+      <div class="achievementTitle">${a.title}</div>
+      <div class="achievementDesc">${a.desc}</div>
+    </div>`;
+  }).join("");
+
+  const mvpHtml = mvpCards.map(a=>`
+    <div class="achievementCard unlocked mvpAch">
+      <div class="achievementEmoji">${a.emoji}</div>
+      <div class="achievementTitle">${a.title}</div>
+      <div class="achievementDesc">${a.desc}</div>
+    </div>`).join("");
+
+  document.getElementById("achievementGrid").innerHTML = mvpHtml + baseCards;
+}
+
+function renderTeacherAchievements(){
+  const rows = studentNames.map(name=>{
+    ensureAchievementData(name);
+    const count = state.students[name].achievements.length;
+    return `<tr>
+      <td>${name}</td>
+      <td>${count}개</td>
+      <td>${state.students[name].achievements.map(id=>{
+        const a = ACHIEVEMENTS.find(x=>x.id===id) || getMvpAchievementCard(id);
+        return a ? a.emoji + ' ' + a.title : '';
+      }).join('<br>')}</td>
+    </tr>`;
+  }).join("");
+
+  document.getElementById("achievementTeacherTable").innerHTML = `
+    <table>
+      <thead><tr><th>학생</th><th>업적 수</th><th>달성 업적</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+
+function getMonthlyMvpCandidates(){
+  const info = statsMonthInfo();
+  const data = studentNames.map(name=>{
+    const m = calcMonthlyStats(name);
+    return { name, stars:m.stars, q1:m.q1, q2:m.q2, levelUps:m.levelUps, down:m.down };
+  });
+
+  const maxStars = Math.max(...data.map(x=>x.stars), 0);
+  const winners = maxStars > 0 ? data.filter(x=>x.stars === maxStars) : [];
+  return { info, winners, maxStars };
+}
+
+function mvpAchievementId(){
+  const info = statsMonthInfo();
+  return "mvp_" + info.year + "_" + info.month;
+}
+
+function renderMonthlyMvpBox(){
+  const box = document.getElementById("monthlyMvpBox");
+  if(!box) return;
+
+  const {info, winners, maxStars} = getMonthlyMvpCandidates();
+  const id = mvpAchievementId();
+  const confirmed = winners.length > 0 && winners.every(w=>{
+    ensureAchievementData(w.name);
+    return state.students[w.name].achievements.includes(id);
+  });
+
+  if(winners.length === 0){
+    box.innerHTML = `<h3>🏆 ${info.label} MVP</h3>
+      <p class="mvpNote">아직 이번 달 별 획득 기록이 없습니다.</p>`;
+    return;
+  }
+
+  box.innerHTML = `<h3>🏆 ${info.label} MVP 후보</h3>
+    <div class="mvpNames">${winners.map(w=>w.name).join(", ")}</div>
+    <p class="mvpNote">이번 달 별 획득 ${maxStars}개 1위${winners.length>1 ? " · 동점자 전원 MVP 대상" : ""}</p>
+    <button class="yellow" onclick="confirmMonthlyMvp()">${confirmed ? "✅ MVP 확정 완료" : "🏆 MVP 확정하기"}</button>`;
+}
+
+window.confirmMonthlyMvp = function(){
+  const {info, winners, maxStars} = getMonthlyMvpCandidates();
+  if(winners.length === 0){
+    alert("아직 MVP 후보가 없습니다.");
+    return;
+  }
+
+  if(!confirm(info.label + " MVP를 확정할까요?\\n" + winners.map(w=>w.name).join(", ") + "\\n동점자는 모두 MVP 업적을 받습니다.")) return;
+
+  const id = mvpAchievementId();
+  winners.forEach(w=>{
+    ensureAchievementData(w.name);
+    const s = state.students[w.name];
+    if(!s.achievements.includes(id)){
+      s.achievements.push(id);
+      addLog(w.name, "🏆 " + info.label + " MVP 선정! 별 획득 " + maxStars + "개");
+    }
+  });
+
+  saveRemote();
+  renderMonthlyMvpBox();
+  renderTeacherAchievements();
+  toast(info.label + " MVP가 확정되었습니다!");
+}
+
+function getMvpAchievementCard(id){
+  const parts = id.split("_");
+  if(parts[0] !== "mvp") return null;
+  return {
+    id,
+    emoji:"🏆",
+    title: Number(parts[2]) + "월 MVP",
+    desc: Number(parts[2]) + "월 별 획득 공동 1위"
+  };
+}
+
+
+
+const AVATAR_ITEMS = {
+  hair:[
+    {id:"basic",label:"기본 머리",icon:"✨",unlock:0},
+    {id:"cap",label:"🧢 캡모자",icon:"🧢",unlock:3},
+    {id:"glass",label:"🕶 선글라스",icon:"🕶",unlock:5},
+    {id:"crown",label:"👑 왕관",icon:"👑",unlock:10},
+    {id:"fire",label:"🔥 불꽃 헤어",icon:"🔥",unlock:15},
+  ],
+  cloth:[
+    {id:"hood",label:"👕 후드티",icon:"👕",unlock:0},
+    {id:"sport",label:"🏃 운동복",icon:"🏃",unlock:3},
+    {id:"jacket",label:"🧥 레전드 재킷",icon:"🧥",unlock:7},
+    {id:"armor",label:"⚔️ RPG 갑옷",icon:"⚔️",unlock:12},
+  ],
+  bg:[
+    {id:"sky",label:"☁️ 하늘",icon:"☁️",unlock:0},
+    {id:"school",label:"🏫 교실",icon:"🏫",unlock:0},
+    {id:"neon",label:"🌃 네온 도시",icon:"🌃",unlock:10},
+    {id:"space",label:"🌌 우주",icon:"🌌",unlock:18},
+    {id:"gold",label:"🏆 MVP 배경",icon:"🏆",unlock:20},
+  ]
+};
+
+function ensureAvatar(name){
+  ensureData(name);
+  if(!state.students[name].avatar){
+    state.students[name].avatar = {
+      base:"🙂",
+      hair:"basic",
+      cloth:"hood",
+      bg:"sky"
+    };
+  }
+}
+
+function buildAvatarEmoji(av){
+  const hair = AVATAR_ITEMS.hair.find(x=>x.id===av.hair)?.icon || "";
+  const cloth = AVATAR_ITEMS.cloth.find(x=>x.id===av.cloth)?.icon || "";
+  return av.base + hair + cloth;
+}
+
+function renderMiniAvatars(){
+  studentNames.forEach(name=>{
+    ensureAvatar(name);
+    const el = document.getElementById("avatarMini-"+name);
+    if(el) el.innerHTML = avatarSvg(state.students[name].avatar, true);
+  });
+}
+
+function renderAvatarEditor(name){
+  ensureAvatar(name);
+  const s = state.students[name];
+  const av = s.avatar;
+
+  document.getElementById("avatarPreview").innerHTML = avatarSvg(av, false);
+  document.getElementById("avatarPreviewMini").innerHTML = avatarSvg(av, true);
+  document.getElementById("avatarLevelTag").innerText = "Lv."+s.personalLevel;
+  document.getElementById("avatarProfileLevel").innerText = "Lv."+s.personalLevel;
+  if(document.getElementById("avatarStarInfo")) document.getElementById("avatarStarInfo").innerText = s.stars + "/5";
+  if(document.getElementById("avatarAchieveInfo")) document.getElementById("avatarAchieveInfo").innerText = (s.achievements||[]).length + "개";
+  if(document.getElementById("avatarPointInfo")) document.getElementById("avatarPointInfo").innerText = (s.study+s.read);
+  ensureAvatarRpg(name);
+  applyAvatarStageBackground(s.avatar);
+  renderAvatarItemGrid();
+
+  renderAvatarSelect("hair", av.hair, s.personalLevel);
+  renderAvatarSelect("cloth", av.cloth, s.personalLevel);
+  renderAvatarSelect("bg", av.bg, s.personalLevel);
+
+  document.getElementById("avatarBaseSelect").value = av.base;
+
+  const preview = document.getElementById("avatarPreview");
+  const bgMap = {
+    sky:"linear-gradient(135deg,#dbeafe,#f5f3ff)",
+    school:"linear-gradient(135deg,#fef3c7,#fff)",
+    neon:"linear-gradient(135deg,#1e1b4b,#7c3aed)",
+    space:"linear-gradient(135deg,#0f172a,#312e81)",
+    gold:"linear-gradient(135deg,#facc15,#fb923c)"
+  };
+  preview.parentElement.style.background = bgMap[av.bg] || bgMap.sky;
+}
+
+function renderAvatarSelect(type, current, level){
+  const sel = document.getElementById(
+    type==="hair" ? "avatarHairSelect" :
+    type==="cloth" ? "avatarClothSelect" :
+    "avatarBgSelect"
+  );
+
+  sel.innerHTML = AVATAR_ITEMS[type].map(item=>{
+    const locked = level < item.unlock;
+    return `<option value="${item.id}" ${current===item.id?'selected':''} ${locked?'disabled':''}>
+      ${locked ? '🔒 ' : ''}${item.label} ${locked ? '(Lv.'+item.unlock+')' : ''}
+    </option>`;
+  }).join("");
+}
+
+
+
+const AVATAR_ITEMS_RPG = {
+  base:[
+    {id:"boy1",name:"남학생 스포티형",icon:"",unlock:0},
+    {id:"boy2",name:"남학생 힙합형",icon:"",unlock:0},
+    {id:"boy3",name:"남학생 모범생형",icon:"",unlock:0},
+    {id:"girl1",name:"여학생 캐주얼형",icon:"",unlock:0},
+    {id:"girl2",name:"여학생 아이돌형",icon:"",unlock:0},
+    {id:"girl3",name:"여학생 귀염형",icon:"",unlock:0}
+  ],
+  hair:[
+    {id:"basic",name:"기본 머리",icon:"✨",unlock:0},
+    {id:"cap",name:"캡모자",icon:"🧢",unlock:3},
+    {id:"glass",name:"선글라스",icon:"🕶",unlock:5},
+    {id:"crown",name:"왕관",icon:"👑",unlock:10},
+    {id:"fire",name:"불꽃 헤어",icon:"🔥",unlock:15}
+  ],
+  cloth:[
+    {id:"hood",name:"후드티",icon:"👕",unlock:0},
+    {id:"sport",name:"운동복",icon:"🏃",unlock:3},
+    {id:"jacket",name:"레전드 재킷",icon:"🧥",unlock:7},
+    {id:"armor",name:"RPG 갑옷",icon:"⚔️",unlock:12}
+  ],
+  acc:[
+    {id:"none",name:"없음",icon:"▫️",unlock:0},
+    {id:"headset",name:"헤드셋",icon:"🎧",unlock:4},
+    {id:"mask",name:"마스크",icon:"😷",unlock:6},
+    {id:"sparkle",name:"반짝 효과",icon:"✨",unlock:8},
+    {id:"gold",name:"황금 오라",icon:"🌟",unlock:20}
+  ],
+  bg:[
+    {id:"sky",name:"하늘",icon:"☁️",unlock:0},
+    {id:"school",name:"교실",icon:"🏫",unlock:0},
+    {id:"neon",name:"네온 도시",icon:"🌃",unlock:15},
+    {id:"space",name:"우주",icon:"🌌",unlock:18},
+    {id:"gold",name:"MVP 황금 배경",icon:"🏆",unlock:20}
+  ]
+};
+
+let avatarCategory = "base";
+
+function ensureAvatarRpg(name){
+  ensureAvatar(name);
+  const av = state.students[name].avatar;
+  if(!("acc" in av)) av.acc = "none";
+}
+
+function buildAvatarEmojiRpg(av){
+  const hair = AVATAR_ITEMS_RPG.hair.find(x=>x.id===av.hair)?.icon || "";
+  const cloth = AVATAR_ITEMS_RPG.cloth.find(x=>x.id===av.cloth)?.icon || "";
+  const acc = AVATAR_ITEMS_RPG.acc.find(x=>x.id===av.acc)?.icon || "";
+  return av.base + hair + cloth + acc;
+}
+
+window.showAvatarCategory = function(cat, btn){
+  avatarCategory = cat;
+  document.querySelectorAll(".avatarTab").forEach(b=>b.classList.remove("active"));
+  if(btn) btn.classList.add("active");
+  renderAvatarItemGrid();
+}
+
+function renderAvatarItemGrid(){
+  if(!currentStudent) return;
+  ensureAvatarRpg(currentStudent);
+  const s = state.students[currentStudent];
+  const av = s.avatar;
+  const grid = document.getElementById("avatarItemGrid");
+  if(!grid) return;
+
+  grid.innerHTML = AVATAR_ITEMS_RPG[avatarCategory].map(item=>{
+    const locked = s.personalLevel < item.unlock;
+    const selected = avatarCategory==="base" ? av.base===item.id : av[avatarCategory]===item.id;
+    return `<div class="avatarItemCard ${selected?'selected':''} ${locked?'locked':''}"
+      onclick="${locked ? '' : `selectAvatarItem('${avatarCategory}','${item.id}')`}">
+      <div class="avatarItemIcon">${locked ? "🔒" : renderRealAvatarItemPreview(avatarCategory,item)}</div>
+      <div class="avatarItemName">${item.name}</div>
+      ${locked ? `<div class="avatarLockText">Lv.${item.unlock} 해금</div>` : ''}
+    </div>`;
+  }).join("");
+}
+
+window.selectAvatarItem = function(type, id){
+  if(!currentStudent) return;
+  ensureAvatarRpg(currentStudent);
+  if(type==="base") state.students[currentStudent].avatar.base = id;
+  else state.students[currentStudent].avatar[type] = id;
+
+  addLog(currentStudent, "🎨 아바타 꾸미기 변경");
+  saveRemote();
+  renderAvatarEditor(currentStudent);
+  renderMiniAvatars();
+  renderAvatarItemGrid();
+}
+
+function applyAvatarStageBackground(av){
+  const stage = document.getElementById("avatarStage");
+  if(!stage) return;
+  const bgMap = {
+    sky:"linear-gradient(135deg,#dbeafe,#f5f3ff)",
+    school:"linear-gradient(135deg,#fff7ed,#e0f2fe)",
+    neon:"linear-gradient(135deg,#1e1b4b,#7c3aed)",
+    space:"linear-gradient(135deg,#020617,#312e81)",
+    gold:"linear-gradient(135deg,#facc15,#fb923c)"
+  };
+  stage.style.background = bgMap[av.bg] || bgMap.sky;
+}
+
+
+/* ===== REAL GAME-LIKE SVG AVATAR SYSTEM ===== */
+
+function avatarPalette(base){
+  const map = {
+    boy1:{skin:"#ffd3a3", hair:"#b5651d", eye:"#1e293b"},
+    boy2:{skin:"#f7c58f", hair:"#111827", eye:"#1e293b"},
+    boy3:{skin:"#ffe0b5", hair:"#8b5a2b", eye:"#1e293b"},
+    girl1:{skin:"#ffd6a5", hair:"#7c2d12", eye:"#1e293b"},
+    girl2:{skin:"#ffe0bd", hair:"#d97706", eye:"#1e293b"},
+    girl3:{skin:"#f5c99b", hair:"#3f2a1d", eye:"#1e293b"}
+  };
+  return map[base] || map.boy1;
+}
+
+function normalizeAvatarData(av){
+  if(!av) av={};
+  const emojiToBase = {"🙂":"boy1","😎":"boy2","🤓":"boy3","😊":"girl1","🧑":"girl2","👧":"girl3"};
+  if(!av.base || av.base.length <= 2) av.base = emojiToBase[av.base] || "boy1";
+  if(!av.hair) av.hair = "basic";
+  if(!av.cloth) av.cloth = "hood";
+  if(!av.acc) av.acc = "none";
+  if(!av.bg) av.bg = "sky";
+  return av;
+}
+
+function avatarSvg(av, mini=false){
+  av = normalizeAvatarData(av);
+  const p = avatarPalette(av.base);
+  const w = mini ? 120 : 260;
+  const h = mini ? 120 : 340;
+  const bg = {
+    sky:["#dbeafe","#f5f3ff"],
+    school:["#fff7ed","#dbeafe"],
+    neon:["#312e81","#7c3aed"],
+    space:["#020617","#312e81"],
+    gold:["#facc15","#fb923c"]
+  }[av.bg] || ["#dbeafe","#f5f3ff"];
+
+  const clothColor = {
+    hood:"#60a5fa",
+    sport:"#22c55e",
+    jacket:"#111827",
+    armor:"#64748b"
+  }[av.cloth] || "#60a5fa";
+
+  const hairPath = {
+    basic:`<path d="M82 89 Q132 32 184 83 Q171 53 132 43 Q95 45 82 89Z" fill="${p.hair}"/>`,
+    cap:`<path d="M80 82 Q132 45 185 82 L185 92 Q132 73 80 92Z" fill="#2563eb"/><rect x="105" y="48" width="62" height="30" rx="15" fill="#3b82f6"/>`,
+    glass:`<path d="M82 89 Q132 32 184 83 Q171 53 132 43 Q95 45 82 89Z" fill="${p.hair}"/>`,
+    crown:`<path d="M82 89 Q132 32 184 83 Q171 53 132 43 Q95 45 82 89Z" fill="${p.hair}"/><path d="M96 47 L112 22 L132 45 L153 22 L171 47 L168 64 L99 64Z" fill="#facc15" stroke="#d97706" stroke-width="4"/>`,
+    fire:`<path d="M82 93 Q110 35 133 65 Q145 28 173 86 Q151 64 136 95 Q111 60 82 93Z" fill="#ef4444"/><path d="M103 84 Q124 41 140 72 Q147 53 162 87 Q134 70 128 103 Q117 80 103 84Z" fill="#f97316"/>`
+  }[av.hair] || "";
+
+  const acc = {
+    none:"",
+    headset:`<path d="M73 119 Q72 82 102 63" fill="none" stroke="#111827" stroke-width="8"/><rect x="63" y="113" width="20" height="40" rx="10" fill="#111827"/><rect x="178" y="113" width="20" height="40" rx="10" fill="#111827"/>`,
+    mask:`<rect x="101" y="137" width="62" height="31" rx="10" fill="#e5e7eb" stroke="#94a3b8" stroke-width="3"/><path d="M108 146 H156 M108 156 H156" stroke="#94a3b8" stroke-width="2"/>`,
+    sparkle:`<path d="M203 63 L212 84 L234 92 L212 101 L203 123 L194 101 L172 92 L194 84Z" fill="#facc15"/><path d="M52 64 L58 77 L72 82 L58 87 L52 101 L46 87 L32 82 L46 77Z" fill="#fb7185"/>`,
+    gold:`<circle cx="132" cy="153" r="101" fill="none" stroke="#facc15" stroke-width="8" opacity=".75"/><path d="M203 63 L212 84 L234 92 L212 101 L203 123 L194 101 L172 92 L194 84Z" fill="#facc15"/>`
+  }[av.acc] || "";
+
+  const glasses = (av.hair==="glass" || av.acc==="gold") ? `<rect x="88" y="112" width="44" height="28" rx="10" fill="none" stroke="#111827" stroke-width="6"/><rect x="136" y="112" width="44" height="28" rx="10" fill="none" stroke="#111827" stroke-width="6"/><path d="M132 126 H136" stroke="#111827" stroke-width="5"/>` : "";
+
+  const svg = `
+  <svg viewBox="0 0 260 340" xmlns="http://www.w3.org/2000/svg" class="realAvatarCard">
+    <defs>
+      <linearGradient id="bg${Math.random().toString(36).slice(2)}" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="${bg[0]}"/>
+        <stop offset="1" stop-color="${bg[1]}"/>
+      </linearGradient>
+    </defs>
+    <rect x="8" y="8" width="244" height="324" rx="32" fill="${bg[0]}" opacity=".35"/>
+    ${acc}
+    <ellipse cx="132" cy="311" rx="72" ry="16" fill="#0f172a" opacity=".14"/>
+    <path d="M94 205 Q132 184 170 205 L188 301 L76 301Z" fill="${clothColor}"/>
+    <path d="M95 210 L71 262" stroke="${clothColor}" stroke-width="30" stroke-linecap="round"/>
+    <path d="M169 210 L191 262" stroke="${clothColor}" stroke-width="30" stroke-linecap="round"/>
+    <path d="M111 207 Q132 222 153 207 L153 239 Q132 254 111 239Z" fill="#f8fafc" opacity=".75"/>
+    <path d="M103 298 L103 238" stroke="${p.skin}" stroke-width="22" stroke-linecap="round"/>
+    <path d="M161 298 L161 238" stroke="${p.skin}" stroke-width="22" stroke-linecap="round"/>
+    <circle cx="132" cy="125" r="58" fill="${p.skin}" stroke="#92400e" stroke-opacity=".15" stroke-width="4"/>
+    ${hairPath}
+    <circle cx="110" cy="128" r="7" fill="${p.eye}"/>
+    <circle cx="154" cy="128" r="7" fill="${p.eye}"/>
+    <circle cx="112" cy="126" r="2" fill="white"/>
+    <circle cx="156" cy="126" r="2" fill="white"/>
+    ${glasses}
+    <path d="M126 145 Q132 150 138 145" stroke="#9a3412" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M112 161 Q132 173 153 161" stroke="#ef4444" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <circle cx="92" cy="143" r="8" fill="#fb7185" opacity=".35"/>
+    <circle cx="172" cy="143" r="8" fill="#fb7185" opacity=".35"/>
+  </svg>`;
+
+  return svg;
+}
+
+function buildAvatarEmojiRpg(av){
+  return avatarSvg(av, true);
+}
+
+function setAvatarHtml(el, av, mini=false){
+  if(!el) return;
+  el.innerHTML = avatarSvg(av, mini);
+}
+
+function renderRealAvatarItemPreview(category, item){
+  let av = {base:"boy1", hair:"basic", cloth:"hood", acc:"none", bg:"sky"};
+  if(category==="base") av.base = item.id;
+  else av[category] = item.id;
+  return avatarSvg(av, true);
+}
+
+window.openAvatarCustomizer = function(){
+  document.getElementById("avatarModal").classList.remove("hidden");
+  avatarCategory = "base";
+  setTimeout(()=>{
+    const first = document.querySelector(".avatarTab");
+    document.querySelectorAll(".avatarTab").forEach(b=>b.classList.remove("active"));
+    if(first) first.classList.add("active");
+    renderAvatarItemGrid();
+  }, 20);
+}
+
+window.closeAvatarCustomizer = function(){
+  document.getElementById("avatarModal").classList.add("hidden");
+}
+
+window.updateAvatar = function(type, value){
+  if(!currentStudent) return;
+  ensureAvatar(currentStudent);
+
+  const s = state.students[currentStudent];
+  const item = type==="base" ? null : AVATAR_ITEMS[type].find(x=>x.id===value);
+
+  if(item && s.personalLevel < item.unlock){
+    alert("Lv."+item.unlock+" 이상에서 해금됩니다!");
+    return;
+  }
+
+  s.avatar[type] = value;
+  addLog(currentStudent, "🎨 아바타 꾸미기 변경");
+  saveRemote();
+  renderAvatarEditor(currentStudent);
+  renderMiniAvatars();
+}
+
+function renderPersonal(name){
+  updatePersonalQuestButtons();
+  ensureData(name); 
+  ensureAvatar(name);
+  const s=state.students[name];
+  renderAvatarEditor(name);
+  document.getElementById("personalName").innerText=name;
+  document.getElementById("personalLevel").innerText="개인 Lv."+s.personalLevel;
+  document.getElementById("personalLevelNum").innerText=s.personalLevel;
+  document.getElementById("personalStars").innerText="⭐".repeat(s.stars)+"☆".repeat(5-s.stars);
+  document.getElementById("starCount").innerText=s.stars+" / 5";
+  document.getElementById("studyCount").innerText=s.study;
+  document.getElementById("readCount").innerText=s.read;
+  document.getElementById("personalBadges").innerHTML=getBadges(name).map(b=>`<span class="badge">${b}</span>`).join("") || "<span class='badge'>아직 뱃지 없음</span>";
+
+  document.getElementById("bigStarGauge").innerText = "⭐".repeat(s.stars) + "☆".repeat(5-s.stars);
+
+  document.getElementById("quest1StatTitle").innerText = plainQuestText(state.studyQuest) || "퀘스트 1";
+  document.getElementById("quest2StatTitle").innerText = plainQuestText(state.readQuest) || "퀘스트 2";
+
+  document.getElementById("studyStat").innerText = s.study + "회";
+  document.getElementById("readStat").innerText = s.read + "회";
+  document.getElementById("totalStat").innerText = (s.study + s.read + s.praise);
+  document.getElementById("levelStat").innerText = "Lv." + s.personalLevel;
+  document.getElementById("downStat").innerText = (s.down || 0) + "회";
+
+  const info = statsMonthInfo();
+  const month = calcMonthlyStats(name);
+  const q1Title = plainQuestText(state.studyQuest) || "퀘스트 1";
+  const q2Title = plainQuestText(state.readQuest) || "퀘스트 2";
+
+  document.getElementById("personalMonthTitle").innerText = "📅 " + info.label + " 나의 월간 통계";
+  document.getElementById("monthQ1Label").innerText = "📚 " + q1Title;
+  document.getElementById("monthQ2Label").innerText = "📖 " + q2Title;
+
+  document.getElementById("monthStars").innerText = (month.q1 + month.q2);
+  document.getElementById("monthLevelUps").innerText = month.levelUps;
+  document.getElementById("monthQ1").innerText = month.q1;
+  document.getElementById("monthQ2").innerText = month.q2;
+  document.getElementById("monthDown").innerText = month.down;
+
+  renderAchievementGrid(name);
+
+  document.getElementById("personalLogs").innerHTML=s.logs.map(x=>{
+    const parts = x.split(" · ");
+    const date = parts[0] || "";
+    let text = parts.slice(1).join(" · ");
+    const monthTagMatch = text.match(/\[(\d+월)\]/);
+    const logMonthTag = monthTagMatch ? monthTagMatch[1] : "";
+    text = text.replace(/\[\d+월\]\s*/g, "");
+    let type = "normal";
+    let tag = "기록";
+
+    if(text.includes("레벨 +1") || text.includes("별 5개")){ type="levelup"; tag="레벨업"; }
+    else if(text.includes("별 -1") || text.includes("레벨 -1") || text.includes("감소")){ type="down"; tag="별 감소"; }
+    else if(text.includes("공부")){ type="study"; tag="공부"; }
+    else if(text.includes("독서")){ type="read"; tag="독서"; }
+    else if(text.includes("칭찬") || text.includes("교사 추가")){ type="praise"; tag="칭찬"; }
+    else if(text.includes("비밀번호")){ type="password"; tag="설정"; }
+
+    return `<div class="timelineItem ${type}">
+      <div class="timelineDate">${date}</div>
+      <div class="timelineTag">${logMonthTag ? logMonthTag + " · " : ""}${tag}</div>
+      <div class="timelineText">${text}</div>
+    </div>`;
+  }).join("") || "<div class='timelineItem'><div class='timelineText'>아직 기록이 없습니다.</div></div>";
+}
+window.openTeacherLogin=function(){ showOnly("teacherLogin"); }
+window.closeTeacherLogin=function(){ showOnly("mainScreen"); }
+window.teacherLogin=function(){
+  if(document.getElementById("teacherPw").value===state.password){ showOnly("teacherScreen"); fillTeacher(); }
+  else alert("비밀번호가 달라요.");
+}
+window.teacherBack=function(){ showOnly("mainScreen"); render(); }
+window.showTeacherTab=function(id){ document.querySelectorAll(".teacherTab").forEach(x=>x.classList.add("hidden")); document.getElementById(id).classList.remove("hidden"); fillTeacher(); }
+function fillTeacher(){
+  document.getElementById("setMonth").value=state.month;
+  document.getElementById("setStudy").value=state.studyQuest.replace(/<br>/g,"\n");
+  document.getElementById("setRead").value=state.readQuest.replace(/<br>/g,"\n");
+  document.getElementById("setReward").value=state.reward;
+  document.getElementById("setGoal").value=state.goal;
+  document.getElementById("setClassCode").value=state.classAccessCode || "0665";
+  document.getElementById("teacherClassLevel").innerText=state.classLevel;
+  renderStatus(); renderTeacherStudentManage(); 
+  if(document.getElementById("teacherMonthSummary")) renderTeacherMonthlyStats();
+  if(document.getElementById("achievementTeacherTable")) renderTeacherAchievements();
+  if(document.getElementById("monthlyMvpBox")) renderMonthlyMvpBox();
+}
+window.saveSettings=function(){
+  state.month=document.getElementById("setMonth").value || state.month;
+  state.studyQuest=document.getElementById("setStudy").value.replace(/\n/g,"<br>") || state.studyQuest;
+  state.readQuest=document.getElementById("setRead").value.replace(/\n/g,"<br>") || state.readQuest;
+  state.reward=document.getElementById("setReward").value || state.reward;
+  state.goal=Number(document.getElementById("setGoal").value) || 35;
+  state.classAccessCode=document.getElementById("setClassCode").value.trim() || state.classAccessCode || "0665";
+  const newPw=document.getElementById("setPw").value.trim(); if(newPw) state.password=newPw;
+  saveRemote(); fillTeacher(); toast("설정 저장 완료!");
+}
+window.changeClassLevel=function(n){ state.classLevel=Math.max(0,state.classLevel+n); saveRemote(); fillTeacher(); toast("학급 레벨 조정 완료"); if(state.classLevel>=state.goal) rewardModal(); }
+function renderTeacherStudentManage(){
+  const box=document.getElementById("teacherStudentCards"); if(!box) return; box.innerHTML="";
+  studentNames.forEach(name=>{ ensureData(name); const s=state.students[name]; const div=document.createElement("div"); div.className="card";
+    div.innerHTML=`<div class="name">${name}</div><div class="level">개인 Lv.${s.personalLevel}</div><div class="stars">${"⭐".repeat(s.stars)}${"☆".repeat(5-s.stars)}</div><div class="badgeRow">${getBadges(name).map(b=>`<span class="badge">${b}</span>`).join("") || '<span class="badge">새싹 대기중</span>'}</div><input id="teacherMemo-${name}" placeholder="이유 입력"><input id="studentPwSet-${name}" placeholder="학생 개인 비밀번호 설정/변경"><div style="display:grid;grid-template-columns:1fr 1fr;gap:7px"><button class="green" onclick="teacherAddStar('${name}')">⭐ 별 +1</button><button class="red" onclick="teacherRemoveStar('${name}')">⚠️ 별 -1</button></div><button class="blue" onclick="teacherSetStudentPw('${name}')">🔐 비밀번호 저장</button>`;
+    box.appendChild(div);
+  });
+}
+window.teacherSetStudentPw=function(name){ const pw=document.getElementById("studentPwSet-"+name).value.trim(); if(!pw){alert("설정할 비밀번호를 입력해 주세요.");return;} ensureData(name); state.students[name].password=pw; addLog(name,"🔐 교사가 개인 비밀번호 설정/변경"); saveRemote(); toast(name+" 비밀번호 저장 완료"); fillTeacher(); }
+window.teacherAddStar=function(name){ const memo=document.getElementById("teacherMemo-"+name).value.trim(); addStar(name,"교사 추가"+(memo?": "+memo:"")); fillTeacher(); }
+window.teacherRemoveStar=function(name){ const memo=document.getElementById("teacherMemo-"+name).value.trim(); removeStar(name,"교사 감소"+(memo?": "+memo:"")); fillTeacher(); }
+function renderStatus(){
+  const rows=studentNames.map(name=>{ ensureData(name); const s=state.students[name]; return `<tr><td>${name}</td><td>Lv.${s.personalLevel}</td><td>${s.stars}/5</td><td>${s.study}</td><td>${s.read}</td><td>${s.down}</td><td>${getBadges(name).join(" ")}</td></tr>`; }).join("");
+  document.getElementById("statusTable").innerHTML=`<table><thead><tr><th>학생</th><th>개인레벨</th><th>별</th><th>퀘스트1</th><th>퀘스트2</th><th>감소</th><th>뱃지</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+window.resetAll=async function(){
+  const first = confirm("정말 모든 내용을 초기화할까요? 학생 별, 레벨, 기록, 개인 비밀번호가 모두 삭제됩니다.");
+  if(!first) return;
+  const second = confirm("진짜 초기화합니다. 되돌릴 수 없습니다. 계속할까요?");
+  if(!second) return;
+
+  try{
+    resetInProgress = true;
+    setSync("☁️ 초기화 저장 중...");
+    const fresh = defaultState();
+    state = fresh;
+    studentNames.forEach(name=>{ ensureData(name); ensureAvatar(name); });
+
+    clearTimeout(saveTimer);
+    remoteReady = true;
+
+    await setDoc(docRef, JSON.parse(JSON.stringify(state)), { merge:false });
+
+    currentStudent = null;
+    sessionStorage.removeItem("class_access_ok");
+
+    setSync("☁️ 초기화 완료");
+    toast("초기화 완료! 입장 화면으로 돌아갑니다.");
+
+    document.getElementById("teacherPw").value = "";
+    document.getElementById("classCodeInput").value = "";
+
+    showOnly("accessGate");
+    render();
+
+    setTimeout(()=>{ resetInProgress = false; location.reload(); }, 800);
+  }catch(e){
+    console.error(e);
+    alert("초기화 저장에 실패했습니다. Firestore 규칙과 인터넷 연결을 확인해 주세요.");
+    resetInProgress = false;
+    setSync("⚠️ 초기화 실패");
+  }
+}
+
+function levelUpModal(name){ const m=document.createElement("div"); m.className="modal"; m.innerHTML=`<div class="modalBox"><h2>🎉 레벨업!</h2><p><b>${name}</b><br>별 5개 달성!</p><p>개인 레벨 +1 · 학급 레벨 +1</p><button class="yellow" onclick="this.closest('.modal').remove()">확인</button></div>`; document.body.appendChild(m); confetti(); }
+function rewardModal(){ const m=document.createElement("div"); m.className="modal"; m.innerHTML=`<div class="modalBox"><h2>🏆 보상 해금!</h2><p style="font-size:24px;font-weight:900">${state.reward}</p><p>학급 목표 레벨을 달성했습니다!</p><button class="yellow" onclick="this.closest('.modal').remove()">확인</button></div>`; document.body.appendChild(m); confetti(); }
+function confetti(){ for(let i=0;i<80;i++){ const c=document.createElement("div"); c.className="confetti"; c.style.left=Math.random()*100+"vw"; c.style.background=["#ff6b6b","#ffd93d","#6bcb77","#4d96ff","#c77dff"][Math.floor(Math.random()*5)]; c.style.animationDelay=Math.random()+"s"; document.body.appendChild(c); setTimeout(()=>c.remove(),3000); } cuteSound(); }
+
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  const codeInput = document.getElementById("classCodeInput");
+  if(codeInput){
+    codeInput.addEventListener("keydown", e=>{
+      if(e.key==="Enter") window.checkClassCode();
+    });
+  }
+  // Firebase 연결이 늦어져도 입장 화면은 정상 작동하도록 유지
+  showOnly("accessGate");
+});
+
+initFirebase();
+</script>
+
+
+
+</body>
+</html>
